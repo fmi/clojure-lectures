@@ -61,7 +61,7 @@
                            (skip-ws text-line)))]
     (let [item-tag {\* :incremental, \+ :static}
           items (vec (for [[sym line] lines]
-                       [(item-tag sym) line]))]
+                       (into [(item-tag sym)] line)))]
       (return (->> items (cons :bullet-list) vec)))))
 
 (def code-block
@@ -76,7 +76,7 @@
   "Matches a chunk in a slide."
   (<|> code-block
        bullet-list
-       text-line))
+       (>>= text-line #(return (into [:paragraph] %)))))
 
 (def slide
   "Matches a slide. It includes a title, followed by any number of slide
@@ -84,7 +84,7 @@
   (bind [title (>> (sym* \=) (skip-ws text-line))
          chunks (many (>> (not-followed-by (<|> eof (sym* \=)))
                           slide-chunk))]
-    (return (into [:slide title] (remove empty? chunks)))))
+    (return (into [:slide title] (remove #{[:paragraph]} chunks)))))
 
 (def presentation
   "Matches a full presentation."

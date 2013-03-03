@@ -41,20 +41,20 @@
             (with-margin "|* First
                           |* Second")
             [:bullet-list
-             [:incremental ["First"]]
-             [:incremental ["Second"]]]
+             [:incremental "First"]
+             [:incremental "Second"]]
 
             (with-margin "|+ First
                           |+ Second")
             [:bullet-list
-             [:static ["First"]]
-             [:static ["Second"]]]
+             [:static "First"]
+             [:static "Second"]]
 
             (with-margin "|+ First
                           |* Second")
             [:bullet-list
-             [:static ["First"]]
-             [:incremental ["Second"]]]))
+             [:static "First"]
+             [:incremental "Second"]]))
   (testing "Code blocks"
     (expect code-block
             (with-margin "|:code
@@ -70,8 +70,8 @@
                           |First line
                           |Second line")
             [:slide ["Title"]
-             ["First line"]
-             ["Second line"]]
+             [:paragraph "First line"]
+             [:paragraph "Second line"]]
 
             (with-margin "|= Slide with a list
                           |
@@ -79,10 +79,10 @@
                           |* First item
                           |* Second item")
             [:slide ["Slide with a list"]
-             ["This is a list:"]
+             [:paragraph "This is a list:"]
              [:bullet-list
-              [:incremental ["First item"]]
-              [:incremental ["Second item"]]]]
+              [:incremental "First item"]
+              [:incremental "Second item"]]]
 
             (with-margin "|= Slide with code
                           |
@@ -92,7 +92,7 @@
                           |  (defn increment [x]
                           |    (+ x 1))")
             [:slide ["Slide with code"]
-             ["This is how to define increment:"]
+             [:paragraph "This is how to define increment:"]
              [:code :clojure "(defn increment [x]\n  (+ x 1))"]]))
   (testing "Presentation"
     (expect presentation
@@ -105,6 +105,6 @@
                           |Second line")
             [:presentation
              [:slide ["First slide"]
-              ["First line"]]
+              [:paragraph "First line"]]
              [:slide ["Second slide"]
-              ["Second line"]]])))
+              [:paragraph "Second line"]]])))
