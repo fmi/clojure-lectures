@@ -70,7 +70,7 @@
                    new-line*
                    (end-by (<|> eof new-line*)
                            (>> (token* "  ") (<+> (many non-newline)))))]
-    (return [:code :clojure (str/join "\n" lines)])))
+    (return [:block :clojure (str/join "\n" lines)])))
 
 (def slide-chunk
   "Matches a chunk in a slide."

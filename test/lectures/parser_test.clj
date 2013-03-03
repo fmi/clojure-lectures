@@ -60,7 +60,7 @@
             (with-margin "|:code
                           |  (defn increment [x]
                           |    (+ x 1))")
-            [:code :clojure
+            [:block :clojure
              (with-margin "|(defn increment [x]
                            |  (+ x 1))")]))
   (testing "Slide"
@@ -93,7 +93,7 @@
                           |    (+ x 1))")
             [:slide ["Slide with code"]
              [:paragraph "This is how to define increment:"]
-             [:code :clojure "(defn increment [x]\n  (+ x 1))"]]))
+             [:block :clojure "(defn increment [x]\n  (+ x 1))"]]))
   (testing "Presentation"
     (expect presentation
             (with-margin "|= First slide
