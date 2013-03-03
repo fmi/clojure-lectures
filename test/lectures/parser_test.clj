@@ -55,6 +55,14 @@
             [:bullet-list
              [:static ["First"]]
              [:incremental ["Second"]]]))
+  (testing "Code blocks"
+    (expect code-block
+            (with-margin "|:code
+                          |  (defn increment [x]
+                          |    (+ x 1))")
+            [:code :clojure
+             (with-margin "|(defn increment [x]
+                           |  (+ x 1))")]))
   (testing "Slide"
     (expect slide
             (with-margin "|= Title
@@ -74,7 +82,18 @@
              ["This is a list:"]
              [:bullet-list
               [:incremental ["First item"]]
-              [:incremental ["Second item"]]]]))
+              [:incremental ["Second item"]]]]
+
+            (with-margin "|= Slide with code
+                          |
+                          |This is how to define increment:
+                          |
+                          |:code
+                          |  (defn increment [x]
+                          |    (+ x 1))")
+            [:slide ["Slide with code"]
+             ["This is how to define increment:"]
+             [:code :clojure "(defn increment [x]\n  (+ x 1))"]]))
   (testing "Presentation"
     (expect presentation
             (with-margin "|= First slide

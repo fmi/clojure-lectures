@@ -1,5 +1,6 @@
 (ns lectures.parser
-  (:use (blancas.kern [core :exclude (parse) :as kern])))
+  (:use (blancas.kern [core :exclude (parse) :as kern]))
+  (:require [clojure.string :as str]))
 
 (defn- chars-excluding
   "Matches any number characters that are not given as arguments and are
@@ -63,9 +64,18 @@
                        [(item-tag sym) line]))]
       (return (->> items (cons :bullet-list) vec)))))
 
+(def code-block
+  "Matches a block of code."
+  (bind [lines (>> (token* ":code")
+                   new-line*
+                   (end-by (<|> eof new-line*)
+                           (>> (token* "  ") (<+> (many non-newline)))))]
+    (return [:code :clojure (str/join "\n" lines)])))
+
 (def slide-chunk
   "Matches a chunk in a slide."
-  (<|> bullet-list
+  (<|> code-block
+       bullet-list
        text-line))
 
 (def slide
