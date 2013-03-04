@@ -5,4 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.blancas/kern "0.5.0"]
-                 [hiccup "1.0.2"]])
+                 [hiccup "1.0.2"]
+                 [clj-yaml "0.4.0"]
+                 [me.raynes/fs "1.4.0"]]
+  :main lectures.core)

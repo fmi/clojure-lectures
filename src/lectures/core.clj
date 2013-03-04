@@ -1,6 +1,7 @@
-(ns lectures.core)
+(ns lectures.core
+  (:use [lectures.compile :only (recompile recompile-all)])
+  (gen-class :main true))
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+(defn -main
+  ([] (recompile-all))
+  ([lecture] (recompile lecture)))
