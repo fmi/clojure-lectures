@@ -1,0 +1,71 @@
+= Зайци
+
+<img src="1-intro/two-rabbits.jpg" width="90%">
+
+= Още зайци
+
+<img src="1-intro/many-rabbits.jpg" width="90%">
+
+= Как всъщност се въдят зайците
+
+:code
+  (def fib (fn [n]
+    (if (= n 0)
+        1
+        (if (= n 1)
+            1
+            (+ (fib (- n 1)) (fib (- n 2)))))))
+  
+  (fib 0)
+  ; 0
+  (fib 11)
+  ; 144
+  
+= Синтаксис
+* Списъци и вектори: `()` и `[]`
+* Викане на функция: `(+ 16 782163)`
+* Може да влагаме на воля: `(/ (fib 65) (- (+ 11 4) 3))`
+* Дефиниране на `Var`: `(def stefan "master")`
+* Условия: `(if (fresh? lettuce) (salad lettuce) (coprse delivery-boy))`
+* `(let [stefan "monster"] (str "Stefan is a " stefan))`
+* `(do (println "baba") "return-value")`
+* Запетаи, кавички, тирета, идентификатори
+
+= defn
+:code
+  (defn fib [n]
+    (if (= n 0)
+        1
+        (if (= n 1)
+            1
+            (+ (fib (- n 1)) (fib (- n 2))))))
+= case
+:code
+  (defn fib [n]
+    (case n
+      0 1
+      1 1
+      (+ (fib (- n 1)) (fib (- n 2)))))
+= when
+
+`if` + `do` - `else`
+
+:code
+  (when (am-grownup self)
+    (walk-naked)
+    (lie-all-day)
+    (eat-chocolate-all-day)
+    (get-fat-all-day)
+    (skip-lectures)
+    (live-forever))
+  
+  ; when-not
+= nil/truthiness
+= arity
+= recur
+= loop
+= higher-level
++ comp
+= #()
+= if-let/when-let
+= Задача
