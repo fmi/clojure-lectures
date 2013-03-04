@@ -36,5 +36,4 @@
         [:paragraph "It is true!"]]
        [:section {:class "slide"}
         [:hgroup [:h1 [:code "Clojure"] " rocks"]]
-        [:p "It is true!"]]
-       ))
+        [:p "It is true!"]]))

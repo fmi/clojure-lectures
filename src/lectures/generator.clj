@@ -22,22 +22,22 @@
   (mapv generate chunks))
 
 (defmethod generate :paragraph [[_ & chunks]]
-  (into [:p] (generate chunks)))
+  `[:p ~@(generate chunks)])
 
 (defmethod generate :block [[_ kind code]]
   [:pre code])
 
 (defmethod generate :bullet-list [[_ & items]]
-  (into [:ul] (map generate items)))
+  `[:ul ~@(map generate items)])
 
 (defmethod generate :incremental [[_ & chunks]]
-  (into [:li {:class "action"}] (generate chunks)))
+  `[:li {:class "action"} ~@(generate chunks)])
 
 (defmethod generate :static [[_ & chunks]]
-  (into [:li] (generate chunks)))
+  `[:li ~@(generate chunks)])
 
 (defmethod generate :slide [[_ title subtitle & chunks]]
-  (into [:section {:class "slide"}
-         (into [:hgroup (into [:h1] (generate title))]
-               (when subtitle [(into [:h2] (generate subtitle))]))]
-        (map generate chunks)))
+  `[:section {:class "slide"}
+    [:hgroup [:h1 ~@(generate title)]
+             ~@(when subtitle `[[:h2 ~@(generate subtitle)]])]
+    ~@(map generate chunks)])
