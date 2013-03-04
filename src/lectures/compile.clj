@@ -31,7 +31,8 @@
         target-file  (target-file-name (str slug ".html"))
         lecture-ast  (-> source-file slurp parse)
         lecture-html (generate-lecture title date lecture-ast)]
-    (spit target-file lecture-html)))
+    (spit target-file lecture-html)
+    (fs/copy-dir (str "lectures/" slug) target-dir)))
 
 (defn- prepare-target-dir
   "Clobbers the target directory, recreates it and copies the static files
