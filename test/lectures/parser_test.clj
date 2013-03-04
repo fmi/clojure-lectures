@@ -62,7 +62,16 @@
                           |    (+ x 1))")
             [:block :clojure
              (with-margin "|(defn increment [x]
-                           |  (+ x 1))")]))
+                           |  (+ x 1))")]
+
+            (with-margin "|:code
+                          |  (foo
+                          |
+                          |  bar)")
+            [:block :clojure
+             (with-margin "|(foo
+                           |
+                           |bar)")]))
   (testing "Slide"
     (expect slide
             (with-margin "|= Title
