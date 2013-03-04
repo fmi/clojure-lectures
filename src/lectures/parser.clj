@@ -68,10 +68,9 @@
   "Matches a block of code."
   (bind [lines (>> (token* ":code")
                    new-line*
-                   (end-by (<|> eof new-line*)
-                           (<|> (>> (token* "  ") (<+> (many non-newline)))
-                                (skip (not-followed-by eof) (many space)))))]
-    (return [:block :clojure (str/join "\n" lines)])))
+                   (many (<|> (>> (token* "  ") (<< (<+> (many non-newline)) (<|> eof new-line*)))
+                              (>> new-line* (return "")))))]
+    (return [:block :clojure (str/trim-newline (str/join "\n" lines))])))
 
 (def slide-chunk
   "Matches a chunk in a slide."
