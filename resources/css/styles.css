@@ -80,3 +80,5 @@ body{ background:#f5f6f6; }
 #deck ol { margin-bottom: 2em; }
 #deck .answer { color: #6a6; font-style: italic; }
 #deck blockquote { font-style: italic; }
+
+#deck li { line-height: 2em;}
