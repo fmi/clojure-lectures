@@ -28,7 +28,7 @@
   `[:p ~@(generate chunks)])
 
 (defmethod generate :block [[_ kind code]]
-  [:pre code])
+  [:pre {:class "brush: clojure"} code])
 
 (defmethod generate :bullet-list [[_ & items]]
   `[:ul ~@(map generate items)])
@@ -60,7 +60,17 @@
     `[:html {:lang "bg"}
       [:head
        [:meta {:charset "utf-8"}]
-       [:link {:rel "stylesheet" :href "css/styles.css"}]
+       [:link {:rel "stylesheet" :type "text/css" :href "css/styles.css"}]
+       [:link {:rel "stylesheet" :type "text/css" :href "css/shCore.css"}]
+       [:link {:rel "stylesheet" :type "text/css" :href "css/shThemeGithub.css"}]
+       [:link {:rel "stylesheet" :type "text/css" :href "css/shClojureExtra.css"}]
+
+       [:script {:type "text/javascript" :src "js/jquery-1.5.2.min.js"}]
+       [:script {:type "text/javascript" :src "js/jquery.jswipe-0.1.2.js"}]
+       [:script {:type "text/javascript" :src "js/htmlSlides.js"}]
+       [:script {:type "text/javascript" :src "js/shCore.js"}]
+       [:script {:type "text/javascript" :src "js/shBrushClojure.js"}]
+
        [:title ~title]]
       [:body
        [:header
@@ -82,7 +92,5 @@
           [:li [:a {:href "http://fmi.clojure.bg/topics"} "http://fmi.clojure.bg"]]
           [:li [:a {:href "http://clojure.github.com/clojure/"} "Официална документация"]]
           [:li [:a {:href "http://twitter.com/clojurefmi"} "@clojurefmi"]]]]]
-       [:script {:src "js/jquery-1.5.2.min.js"}]
-       [:script {:src "js/jquery.jswipe-0.1.2.min.js"}]
-       [:script {:src "js/htmlSlides.js"}]
+       [:script {:type "text/javascript"} "SyntaxHighlighter.all({gutter: false, toolbar: false});"]
        [:script {:type "text/javascript"} "$(function() { htmlSlides.init({hideToolbar: true}); });"] ]]))
