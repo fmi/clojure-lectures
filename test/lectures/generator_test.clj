@@ -24,8 +24,17 @@
        [:bullet-list [:static "Foo" [:bold "Bar"] "Baz"]]
        [:ul [:li "Foo" [:strong "Bar"] "Baz"]]
 
-       [:slide [[:code "Clojure"] " rocks"]
+       [:slide ["Title"] ["Subtitle"]
+        [:paragraph "Paragraph"]]
+       [:section {:class "slide"}
+        [:hgroup
+         [:h1 "Title"]
+         [:h2 "Subtitle"]]
+        [:p "Paragraph"]]
+
+       [:slide [[:code "Clojure"] " rocks"] nil
         [:paragraph "It is true!"]]
        [:section {:class "slide"}
         [:hgroup [:h1 [:code "Clojure"] " rocks"]]
-        [:p "It is true!"]]))
+        [:p "It is true!"]]
+       ))

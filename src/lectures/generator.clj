@@ -36,7 +36,8 @@
 (defmethod generate :static [[_ & chunks]]
   (into [:li] (generate chunks)))
 
-(defmethod generate :slide [[_ title & chunks]]
+(defmethod generate :slide [[_ title subtitle & chunks]]
   (into [:section {:class "slide"}
-         [:hgroup (into [:h1] (generate title))]]
+         (into [:hgroup (into [:h1] (generate title))]
+               (when subtitle [(into [:h2] (generate subtitle))]))]
         (map generate chunks)))

@@ -83,9 +83,10 @@
   "Matches a slide. It includes a title, followed by any number of slide
    chunks."
   (bind [title (>> (sym* \=) (skip-ws text-line))
+         subtitle (optional (>> (token* "==") (skip-ws text-line)))
          chunks (many (>> (not-followed-by (<|> eof (sym* \=)))
                           slide-chunk))]
-    (return (into [:slide title] (remove #{[:paragraph]} chunks)))))
+    (return (into [:slide title subtitle] (remove #{[:paragraph]} chunks)))))
 
 (def presentation
   "Matches a full presentation."

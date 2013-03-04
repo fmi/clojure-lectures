@@ -75,10 +75,11 @@
   (testing "Slide"
     (expect slide
             (with-margin "|= Title
+                          |== Subtitle
                           |
                           |First line
                           |Second line")
-            [:slide ["Title"]
+            [:slide ["Title"] ["Subtitle"]
              [:paragraph "First line"]
              [:paragraph "Second line"]]
 
@@ -87,7 +88,7 @@
                           |This is a list:
                           |* First item
                           |* Second item")
-            [:slide ["Slide with a list"]
+            [:slide ["Slide with a list"] nil
              [:paragraph "This is a list:"]
              [:bullet-list
               [:incremental "First item"]
@@ -100,7 +101,7 @@
                           |:code
                           |  (defn increment [x]
                           |    (+ x 1))")
-            [:slide ["Slide with code"]
+            [:slide ["Slide with code"] nil
              [:paragraph "This is how to define increment:"]
              [:block :clojure "(defn increment [x]\n  (+ x 1))"]]))
   (testing "Presentation"
@@ -113,7 +114,7 @@
                           |
                           |Second line")
             [:presentation
-             [:slide ["First slide"]
+             [:slide ["First slide"] nil
               [:paragraph "First line"]]
-             [:slide ["Second slide"]
+             [:slide ["Second slide"] nil
               [:paragraph "Second line"]]])))
