@@ -33,7 +33,17 @@
 * Функция: `(fn kick-ass [ass] (kick (bleach ass)))`
 * Запетаи, кавички, тирета, идентификатори
 
+= fn
+
+:code
+  ((fn [a b c d e]
+    (+ a b c d e))
+  1 2 3 4 5)
+  
 = defn
+
+`def` + `fn`
+
 :code
   (defn fib [n]
     (if (= n 0)
@@ -41,6 +51,7 @@
         (if (= n 1)
             1
             (+ (fib (- n 1)) (fib (- n 2))))))
+  
 = case
 :code
   (defn fib [n]
@@ -48,6 +59,26 @@
       0 1
       1 1
       (+ (fib (- n 1)) (fib (- n 2)))))
+  
+= if + няколко неща за правене
+
+:code
+  (if (disaster-struck?)
+    ((save-laptop) (save-stefan))
+    (lick-ice-cream))
+
+Не работи! Ще се опита да използва резултата от `(save-laptop)` като функция и ще му даде като аргумент резултата от `(save-stefan)`.
+
+= do
+
+:code
+  (if (disaster-struck?)
+    (do
+      (save-laptop)
+      (save-stefan)
+      (save-the-world))
+    (lick-ice-cream))
+  
 = when
 
 `if` + `do` - `else`
@@ -127,6 +158,13 @@
   
   (map (partial + 5) [1 2 3 4 5])
   ; (6 7 8 9 10)
+= #
+* `#(+ 5 %)`
+* `#(< % 3)`
+* `#(Math/pow %1 %2)`
+* `#(#(+ % %))` – не можем да ги влагаме
+* Няма неявно `do`, само един израз
+
 = loop
 = recur
 = if-let/when-let
