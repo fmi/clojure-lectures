@@ -35,7 +35,7 @@
 * `(let [stefan "monster"] (str "Stefan is a " stefan))`
 * `(do (println "baba") (println "dyado") "return-value")`
 * `(quote (+ 1 2))` или `'(+ 1 2)`
-* Функция: `(fn kick-ass [ass] (kick (bleach ass)))`
+* Функция: `(fn [ass] (kick (bleach ass)))`
 * Валидни са идентификатори с `-`, `?`, `!` и много други символи
 * Запетаята не значи нищо, като whitespace е
 
@@ -66,6 +66,14 @@
             1
             (+ (fib (- n 1)) (fib (- n 2))))))
 
+= cond
+:code
+  (defn fib [n]
+    (cond
+      (= n 0) 1
+      (= n 1) 1
+      :else (+ (fib (- n 1)) (fib (- n 2)))))
+
 = case
 :code
   (defn fib [n]
@@ -93,6 +101,19 @@
       (save-the-world))
     (lick-ice-cream))
 
+= print форми
+
+В Clojure има два различни начина да обръщате обекти до низ.
+
+:code
+  (print [10 "goto 20"]) ; => [10 goto 20]
+  (prn [10 "goto 20"])   ; => [10 "goto 20"]
+
+* `(print a)` извежда `(str a)`
+* `(println a)` е като `println` с нов ред накрая
+* `(pr a)` извежда `(pr-str a)`
+* `(prn a)` е като `pr` с нов ред накрая
+
 = when
 
 `if` + `do` - `else`
@@ -106,11 +127,11 @@
     (skip-lectures)
     (live-forever))
 
-  ; when-not
+`when-not` е като `(when (not ))`.
 
 = nil/truthiness
 
-Лъжа са само `false` и `nil`
+Лъжа са само `false` и `nil`:
 
 :annotate
   (defn truth-level [x] (if x "true" "false"))
@@ -118,7 +139,7 @@
   (truth-level 5)      ; =>
   (truth-level "baba") ; =>
   (truth-level "")     ; =>
-  (truth-level '())    ; =>
+  (truth-level ())     ; =>
   (truth-level [])     ; =>
   (truth-level true)   ; =>
   (truth-level false)  ; =>
@@ -126,17 +147,29 @@
 
 = Не е като в Scheme
 
-В Scheme празния списък е `nil`, в Clojure си е просто празен списък.
+В Scheme празния списък е `nil`, в Clojure си е просто празен списък. `nil` е всъщност `null` в Java.
+
+= if-let
+
+`if-let` = `if` + `let`
+
+:code
+  (if-let [result (parse input)]
+    (println "Parsed: " result)
+    (println "Parsing failed"))
 
 = arity
 
 Дефиниции за различни на брой аргументи в една:
-:code
+:annotate
   (defn call-a-master
     ([] "Stefan is coming to save you!")
     ([name] (str "Bootie-calling " name ". Get ready!")))
 
-= Функциите са първокласни обекти в Clojure.
+  (call-a-master) ; =>
+  (call-a-master "Nikolay") ; =>
+
+= Функциите са първокласни обекти в Clojure
 
 * Може да ги създаваме когато си поискаме
 * Можем да ги държим в стандартните структури от данни
@@ -158,6 +191,7 @@
   ; =>
 
 = Примери
+
 :annotate
   (map str [1 2 3 4 5])
   ; =>
@@ -226,6 +260,7 @@ JVM не поддържа оптимизация на опашкова реку�
   ; =>
 
 = loop
+
 :code
   (defn random-draws [number-of-rounds]
     (println "Initializng…")
@@ -238,4 +273,3 @@ JVM не поддържа оптимизация на опашкова реку�
     (println "Deinitializing…"))
 
   (random-draws 4)
-
