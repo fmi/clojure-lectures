@@ -15,12 +15,12 @@
         (if (= n 1)
             1
             (+ (fib (- n 1)) (fib (- n 2)))))))
-  
+
   (fib 0)
   ; 0
   (fib 11)
   ; 144
-  
+
 = 90% от синтаксиса
 * Списъци и вектори: `()` и `[]`
 * Викане на функция: `(+ 16 782163)`
@@ -39,7 +39,7 @@
   ((fn [a b c d e]
     (+ a b c d e))
   1 2 3 4 5)
-  
+
 = defn
 
 `def` + `fn`
@@ -51,7 +51,7 @@
         (if (= n 1)
             1
             (+ (fib (- n 1)) (fib (- n 2))))))
-  
+
 = case
 :code
   (defn fib [n]
@@ -59,7 +59,7 @@
       0 1
       1 1
       (+ (fib (- n 1)) (fib (- n 2)))))
-  
+
 = if + няколко неща за правене
 
 :code
@@ -78,7 +78,7 @@
       (save-stefan)
       (save-the-world))
     (lick-ice-cream))
-  
+
 = when
 
 `if` + `do` - `else`
@@ -91,7 +91,7 @@
     (get-fat-all-day)
     (skip-lectures)
     (live-forever))
-  
+
   ; when-not
 = nil/truthiness
 
@@ -99,7 +99,7 @@
 
 :code
   (defn truth-level [x] (if x "true" "false"))
-  
+
   (truth-level 5)
   (truth-level "baba")
   (truth-level "")
@@ -135,7 +135,7 @@
     (first (rest (rest (rest (rest l))))))
   ; (fifth [1 2 3 4 5]
   ; 5
-  
+
   (def fifth-comp (comp first rest rest rest rest))
   ; (fifth-comp [1 2 3 4 5]
   ; 5
@@ -143,19 +143,19 @@
 :code
   (map str [1 2 3 4 5])
   ; ("1" "2" "3" "4" "5")
-  
+
   (filter (complement nil?) [1 false 3 nil 5])
   ; (1 false 3 5)
-  
+
   (remove #(< % 3) [1 2 3 4 5])
   ; (3 4 5)
-  
+
   (map #(Math/floor (+ (Math/sqrt %) 11)) [1 2 3 4 5])
   ; (12.0 12.0 12.0 13.0 13.0)
-  
+
   (map #(+ % 5) [1 2 3 4 5])
   ; (6 7 8 9 10)
-  
+
   (map (partial + 5) [1 2 3 4 5])
   ; (6 7 8 9 10)
 = #
