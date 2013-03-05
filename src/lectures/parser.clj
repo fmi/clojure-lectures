@@ -37,8 +37,7 @@
 (def text-line
   "Matches a single line of text that can include inline declarations like
    code blocks or bold text. Returns a vector of chunks."
-  (bind [
-         parsed (many (<|> (<:> inline-code)
+  (bind [parsed (many (<|> (<:> inline-code)
                            (<:> bold)
                            non-newline))
          _ (optional new-line*)]
@@ -76,6 +75,7 @@
   "Matches a chunk in a slide."
   (<|> code-block
        bullet-list
+       (<*> (token* "foo") (token* "bar"))
        (>>= text-line #(return (into [:paragraph] %)))))
 
 (def slide
@@ -94,4 +94,9 @@
 
 (defn parse
   ([input] (parse presentation input))
-  ([parser input] (->> input (kern/parse parser) :value)))
+  ([parser input]
+   (let [result (kern/parse parser input)]
+     (when-not (:ok result)
+       (print-error result)
+       (throw (RuntimeException. "Parsing failed")))
+     (:value result))))

@@ -22,12 +22,10 @@
   (testing "Inline code"
     (expect inline-code
             "`foo`"   [:code "foo"]
-            "`x * y`" [:code "x * y"]
-            "`x\ny`"  nil))
+            "`x * y`" [:code "x * y"]))
   (testing "Bold text"
     (expect bold
-            "*foo*"      [:bold "foo"]
-            "*foo\nbar*" nil))
+            "*foo*"      [:bold "foo"]))
   (testing "Line of text"
     (expect text-line
             "Text"                  ["Text"]
