@@ -13,7 +13,7 @@
        [:paragraph "Foo"]               [:p "Foo"]
        [:paragraph "Foo" [:bold "Bar"]] [:p "Foo" [:strong "Bar"]]
 
-       [:block :clojure "(clojure code)"] [:pre "(clojure code)"]
+       [:block :clojure "(clojure code)"] [:pre {:class "brush: clojure"} "(clojure code)"]
 
        [:bullet-list [:incremental "Foo"] [:incremental "Bar"]]
        [:ul [:li {:class "action"} "Foo"] [:li {:class "action"} "Bar"]]
