@@ -84,7 +84,7 @@
 `if` + `do` - `else`
 
 :code
-  (when (am-grownup self)
+  (when (am-grownup? self)
     (walk-naked)
     (lie-all-day)
     (eat-chocolate-all-day)
