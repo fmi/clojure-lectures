@@ -21,14 +21,16 @@
   (fib 11)
   ; 144
   
-= Синтаксис
+= 90% от синтаксиса
 * Списъци и вектори: `()` и `[]`
 * Викане на функция: `(+ 16 782163)`
 * Може да влагаме на воля: `(/ (fib 65) (- (+ 11 4) 3))`
 * Дефиниране на `Var`: `(def stefan "master")`
 * Условия: `(if (fresh? lettuce) (salad lettuce) (coprse delivery-boy))`
 * `(let [stefan "monster"] (str "Stefan is a " stefan))`
-* `(do (println "baba") "return-value")`
+* `(do (println "baba") (println "dyado") "return-value")`
+* `(quote (+ 1 2))` или `'(+ 1 2)`
+* Функция: `(fn kick-ass [ass] (kick (bleach ass)))`
 * Запетаи, кавички, тирета, идентификатори
 
 = defn
@@ -61,11 +63,70 @@
   
   ; when-not
 = nil/truthiness
+
+Лъжа са само `false` и `nil`
+
+:code
+  (defn truth-level [x] (if x "true" "false"))
+  
+  (truth-level 5)
+  (truth-level "baba")
+  (truth-level "")
+  (truth-level '())
+  (truth-level [])
+  (truth-level true)
+  (truth-level false)
+  (truth-level nil)
+  (truth-level nil false)
+= Не е като в Scheme
+
+В Scheme празния списък е `nil`, в Clojure си е просто празен списък.
+
 = arity
-= recur
+Дефиниции за различни на брой аргументи в една:
+:code
+  (defn call-a-master
+    ([] "Stefan is coming to save you!")
+    ([name] (str "Bootie-calling " name ". Get ready!")))
+
+= Функциите са първокласни обекти в Clojure.
+* Може да ги създаваме когато си поискаме
+* Можем да ги държим в стандартните структури от данни
+* Може да ги подаваме като аргументи насам-натам
+* Може да ги връщаме като резултат от функции
+
+= Функции от по-висок ред
+
+Функция, която или приема като аргумент функция или връща като резултат функция.
+
+:code
+  (defn fifth [l]
+    (first (rest (rest (rest (rest l))))))
+  ; (fifth [1 2 3 4 5]
+  ; 5
+  
+  (def fifth-comp (comp first rest rest rest rest))
+  ; (fifth-comp [1 2 3 4 5]
+  ; 5
+= Примери
+:code
+  (map str [1 2 3 4 5])
+  ; ("1" "2" "3" "4" "5")
+  
+  (filter (complement nil?) [1 false 3 nil 5])
+  ; (1 false 3 5)
+  
+  (remove #(< % 3) [1 2 3 4 5])
+  ; (3 4 5)
+  
+  (map #(Math/floor (+ (Math/sqrt %) 11)) [1 2 3 4 5])
+  ; (12.0 12.0 12.0 13.0 13.0)
+  
+  (map #(+ % 5) [1 2 3 4 5])
+  ; (6 7 8 9 10)
+  
+  (map (partial + 5) [1 2 3 4 5])
+  ; (6 7 8 9 10)
 = loop
-= higher-level
-+ comp
-= #()
+= recur
 = if-let/when-let
-= Задача
