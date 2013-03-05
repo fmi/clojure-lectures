@@ -24,6 +24,10 @@
        "(defonce y 2)
         y ; 2"
 
+       ; Exceptions
+       "(throw (RuntimeException. \"Message\")) ; =>"
+       "(throw (RuntimeException. \"Message\")) ; java.lang.RuntimeException: Message"
+
        ; Previous line annotation
        "(map inc [1 2 3])
         ; =>"

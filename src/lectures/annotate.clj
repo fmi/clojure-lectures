@@ -20,17 +20,28 @@
       (eval '(do
                (ns lectures.sandbox)
                (def placeholder-values (atom {}))
-               (defn- store-result [number value]
-                 (swap! placeholder-values assoc number value)
-                 value)))
+               (defmacro store-result [number & body]
+                 `(try
+                    (let [value# (do ~@body)]
+                      (swap! ~'placeholder-values assoc ~number value#)
+                      value#)
+                    (catch Throwable e#
+                      (swap! ~'placeholder-values assoc ~number e#)
+                      nil)))))
       (eval (read-string code))
       (let [result (eval '@placeholder-values)]
         (remove-ns 'lectures.sandbox)
         result))))
 
+(defn- placeholder->str
+  [value]
+  (condp instance? value
+    Throwable (str (-> value class .getName) ": " (.getMessage value))
+    (pr-str value)))
+
 (defn- replace-placeholders
   [code placeholders]
-  (str/replace code #"(?m)\{(\d+)\}$" #(-> % second Integer. placeholders pr-str)))
+  (str/replace code #"(?m)\{(\d+)\}$" #(-> % second Integer. placeholders placeholder->str)))
 
 (defn annotate
   [code]
