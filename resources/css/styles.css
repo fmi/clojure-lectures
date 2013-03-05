@@ -82,3 +82,7 @@ body{ background:#f5f6f6; }
 #deck blockquote { font-style: italic; }
 
 #deck li { line-height: 2em;}
+
+#deck .js-doc { text-decoration: underline !important; }
+#doc-tooltip { position: absolute; left: 10px; right: 10px; display: none; background-color: #fff; border: 8px solid #ddd; padding: 14px; font-family: Monaco, monospace; font-size: 14px; }
+#doc-tooltip strong { font-weight: bolder; text-decoration: underline; }

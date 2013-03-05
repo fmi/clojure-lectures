@@ -1,6 +1,8 @@
 (ns lectures.generator
   (:require [clojure.string :as str])
-  (:use hiccup.core)
+  (:use hiccup.core
+        [cheshire.core :only (generate-string)]
+        [lectures.doc-table :only (with-doc-table gather-docs get-doc-table)])
   (:import java.text.SimpleDateFormat
            java.util.Locale))
 
@@ -28,6 +30,7 @@
   `[:p ~@(generate chunks)])
 
 (defmethod generate :block [[_ kind code]]
+  (gather-docs code)
   [:pre {:class "brush: clojure"} code])
 
 (defmethod generate :bullet-list [[_ & items]]
@@ -54,8 +57,8 @@
       (.format date)
       str/lower-case))
 
-(defn generate-lecture
-  [title date ast]
+(defn- lecture-html
+  [title date body]
   (html
     `[:html {:lang "bg"}
       [:head
@@ -70,6 +73,7 @@
        [:script {:type "text/javascript" :src "js/htmlSlides.js"}]
        [:script {:type "text/javascript" :src "js/shCore.js"}]
        [:script {:type "text/javascript" :src "js/shBrushClojure.js"}]
+       [:script {:type "text/javascript" :src "js/docs.js"}]
 
        [:title ~title]]
       [:body
@@ -85,12 +89,18 @@
          [:hgroup
           [:h1 ~title]
           [:h2 ~(format-date date)]]]
-        ~@(generate ast)
+        ~@body
         [:section
          [:hgroup [:h1 "Въпроси"]]
          [:ul
           [:li [:a {:href "http://fmi.clojure.bg/topics"} "http://fmi.clojure.bg"]]
           [:li [:a {:href "http://clojure.github.com/clojure/"} "Официална документация"]]
           [:li [:a {:href "http://twitter.com/clojurefmi"} "@clojurefmi"]]]]]
-       [:script {:type "text/javascript"} "SyntaxHighlighter.all({gutter: false, toolbar: false});"]
-       [:script {:type "text/javascript"} "$(function() { htmlSlides.init({hideToolbar: true}); });"] ]]))
+       [:pre {:id "doc-tooltip"}]
+       [:script {:type "text/javascript"} "window.docs = " ~(generate-string (get-doc-table))]
+       [:script {:type "text/javascript"} "$(function() { htmlSlides.init({hideToolbar: true}); });"]]]))
+
+(defn generate-lecture
+  [title date ast]
+  (with-doc-table
+    (lecture-html title date (generate ast))))
