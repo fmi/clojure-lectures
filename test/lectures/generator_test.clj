@@ -13,7 +13,8 @@
        [:paragraph "Foo"]               [:p "Foo"]
        [:paragraph "Foo" [:bold "Bar"]] [:p "Foo" [:strong "Bar"]]
 
-       [:block :clojure "(clojure code)"] [:pre {:class "brush: clojure"} "(clojure code)"]
+       [:block :code "(clojure code)"]     [:pre {:class "brush: clojure"} "(clojure code)"]
+       [:block :annotate "(+ 1 2) ; =>"]   [:pre {:class "brush: clojure"} "(+ 1 2) ; 3"]
 
        [:bullet-list [:incremental "Foo"] [:incremental "Bar"]]
        [:ul [:li {:class "action"} "Foo"] [:li {:class "action"} "Bar"]]
@@ -37,3 +38,5 @@
        [:section {:class "slide"}
         [:hgroup [:h1 [:code "Clojure"] " rocks"]]
         [:p "It is true!"]]))
+
+(run-tests)

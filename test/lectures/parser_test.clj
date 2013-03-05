@@ -58,7 +58,7 @@
             (with-margin "|:code
                           |  (defn increment [x]
                           |    (+ x 1))")
-            [:block :clojure
+            [:block :code
              (with-margin "|(defn increment [x]
                            |  (+ x 1))")]
 
@@ -66,7 +66,7 @@
                           |  (foo
                           |
                           |  bar)")
-            [:block :clojure
+            [:block :code
              (with-margin "|(foo
                            |
                            |bar)")]
@@ -75,7 +75,11 @@
                           |  trailing newlines
                           |
                           |")
-            [:block :clojure "trailing newlines"]))
+            [:block :code "trailing newlines"]
+
+            (with-margin "|:annotate
+                          |  (def answer 42)")
+            [:block :annotate "(def answer 42)"]))
   (testing "Slide"
     (expect slide
             (with-margin "|= Title
@@ -109,7 +113,7 @@
                           |After the code")
             [:slide ["Slide with code"] nil
              [:paragraph "This is how to define increment:"]
-             [:block :clojure "(defn increment [x]\n  (+ x 1))"]
+             [:block :code "(defn increment [x]\n  (+ x 1))"]
              [:paragraph "After the code"]]))
   (testing "Presentation"
     (expect presentation

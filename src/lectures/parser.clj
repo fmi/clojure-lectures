@@ -65,11 +65,11 @@
 
 (def code-block
   "Matches a block of code."
-  (bind [lines (>> (token* ":code")
-                   new-line*
+  (bind [tag (>> (sym* \:) (token* "code" "annotate"))
+         lines (>> new-line*
                    (many (<|> (>> (token* "  ") (<< (<+> (many non-newline)) (<|> eof new-line*)))
                               (>> new-line* (return "")))))]
-    (return [:block :clojure (str/trim-newline (str/join "\n" lines))])))
+    (return [:block (keyword tag) (str/trim-newline (str/join "\n" lines))])))
 
 (def slide-chunk
   "Matches a chunk in a slide."

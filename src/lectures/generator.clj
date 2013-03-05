@@ -2,12 +2,14 @@
   (:require [clojure.string :as str])
   (:use hiccup.core
         [cheshire.core :only (generate-string)]
+        [lectures.annotate :only (annotate)]
         [lectures.doc-table :only (with-doc-table gather-docs get-doc-table)])
   (:import java.text.SimpleDateFormat
            java.util.Locale))
 
 (defn- generate-dispatch [ast]
   (cond (string? ast) :text
+        (= :block (first ast)) (->> ast (take 2) (map name) (str/join "-") keyword)
         (keyword? (first ast)) (first ast)
         :else :text-line))
 
@@ -29,9 +31,13 @@
 (defmethod generate :paragraph [[_ & chunks]]
   `[:p ~@(generate chunks)])
 
-(defmethod generate :block [[_ kind code]]
+(defmethod generate :block-code [[_ _ code]]
   (gather-docs code)
   [:pre {:class "brush: clojure"} code])
+
+(defmethod generate :block-annotate [[_ _ code]]
+  (gather-docs code)
+  [:pre {:class "brush: clojure"} (annotate code)])
 
 (defmethod generate :bullet-list [[_ & items]]
   `[:ul ~@(map generate items)])
