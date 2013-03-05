@@ -9,6 +9,10 @@ $(function() {
     if (doc) {
       code.data('docKey', key);
       code.addClass('js-doc');
+
+      if (key.length > 1) {
+        code.addClass('with-doc');
+      }
     }
   });
 
