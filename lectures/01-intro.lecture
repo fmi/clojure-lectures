@@ -178,7 +178,7 @@
       1
       (* base (pow base (dec exp)))))
 
-  (pow 2 10000)
+  (pow (bigint 2) (bigint 10000))
   ; =>
 
 Това не е опашкова рекурсия.
@@ -193,7 +193,7 @@
                 (pow-helper base (dec exp) (* base acc))))]
       (pow-helper base exp 1)))
 
-  (pow 2 (bigint 10000))
+  (pow (bigint 2) (bigint 10000))
   ; =>
 
 JVM не поддържа оптимизация на опашкова рекурсия.
@@ -207,7 +207,7 @@ JVM не поддържа оптимизация на опашкова реку�
                 (recur base (dec exp) (* base acc))))]
       (pow-helper base exp 1)))
 
-  (pow 2 (bigint 10000))
+  (pow (bigint 2) (bigint 10000))
   ; =>
 
 = loop
