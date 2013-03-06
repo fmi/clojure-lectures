@@ -1,0 +1,49 @@
+= Числа
+Числата са скучни и знаете почти всичко. Почти.
+
+:annotate
+  10/4 ; =>
+
+  (+ 2 111/222) ; =>
+
+  (ratio? 1/2); =>
+
+* Рационалните числа са много по-точни
+* Рационалните числа са малко по-бавни
+
+= keywords
+
+:annotate
+  (def users [{:name "Spinderman", :popularity 88} {:name "Baba" :popularity -3}])
+
+  (map :name users) ; =>
+
+* Ключове на речници
+* Специални стойности за аргументи на функции
+
+= symbols
+
+* Символите са като идентификатори, но може и да ги ползваме като самостоятелни обекти, а не да вземем стойността им: `quote`
+* `with-meta`
+
+= regex
+
+* `#"\d\d\d\w+"`
+
+= seq
+
+* first
+* rest
+
+= Вектори 
+* `[1 2 3]`
+* `(vec (range 10))` ; =>
+
+= Abstractions
+
+<blockquote>It is better to have 100 functions operate on one data abstraction than 10 functions on 10 data structures.
+</blockquote>
+Rick Hickey
+
+= Persistence
+
