@@ -16,43 +16,86 @@
 * Рационалните числа са много по-точни
 * Рационалните числа са малко по-бавни
 
-= keywords
+
+= keywords – специални стойности
 
 :annotate
-  (def users [{:name "Spinderman", :popularity 88} {:name "Baba" :popularity -3}])
+  (defn create-user [name, role]
+    (let [internal-role-id (case role
+                            :admin 19
+                            :editor 11
+                            -2)]
+      (str "Created user with name " name " and internal role ID of " internal-role-id)))
 
-  (map :name users) ; =>
+  (create-user "Barry" :lame-user) ; =>
+  (create-user "Borry" :admin) ; =>
 
-* Ключове на речници
-* Специални стойности за аргументи на функции
+* Интернирани са – два обекта с една и съща стойност се пазят само веднъж в паметта: `(identical? :baba :baba)`
+* По-смислени са от низове за константни специални стойности, защото се пишат по-лесно и заемат по-малко памет
 
 = regex
 
 * `#"\d\d\d\w+"`
-* <a href="http://clojuredocs.org/clojure_core/clojure.core/re-seq">(doc re-seq)</a>
+* <a href="http://clojure.org/other_functions#Other%20Useful%20Functions%20and%20Macros-Regex%20Support">Clojure.org &rarr; Regex Support</a>
 
-= Abstractions
+= Абстракции за колекции
 
 <blockquote>It is better to have 100 functions operate on one data abstraction than 10 functions on 10 data structures.
 </blockquote>
 Rick Hickey
 
 * Различните абстракции за колекции в Clojure използват един и същи интерфейс, който не се влияе от имплементацията: `seq`, `conj`, `first`, `rest`, `count`…
-* Колекции – `conj`, `seq`, `empty`, `count`, `=`
+* Колекции – `conj`, `empty`, `count`, `=`, `seq`
 * Поредици (sequences) – `seq`, `first`, `rest`, `lazy-seq`
 * Асоциативни – `seq`, `assoc`, `dissoc`, `get`, `contains?`
-* Индесирани – `seq`, `get`, `nth`
-* Сортирани
+* Индексирани – `seq`, `get`, `nth`
 * Стек, опашка – `conj`, `pop`, `peek`
+* Сортирани
 * Множество
 
 = Имплементации на абстракциите
-* Всички структури, за които ще говорим днес са immutable и persistent – веднъж насочим ли едно име към стойност, тя никога не се променя. При това без да губим скорост или памет.
+* Всички структури, за които ще говорим днес са <strong>immutable</strong> и <strong>persistent</strong> – веднъж насочим ли едно име към стойност, тя никога не се променя. При това без да губим скорост или памет.
 * Вектори
 * Списъци
 * Множества
 * Речници
+* Сортирани речници
+* Опашка
 
 = Вектори
++ Най-популярната реализация на индексирана и поредна колекция
++ Използват се в синтаксиса на езика
++ Може да се вмъква само отзад и то е `O(1)`
++ Достъпът до произволен елемент също е `O(1)`
+
+:annotate
+  (def my-bag ["laptop" "knife" "earphones" "phone"])
+  (def stuff-for-FMI ["clicker" "piece of mind" "Snickers"])
+
+  (conj my-bag "ФЗФ file") ; =>
+  (into my-bag stuff-for-FMI) ; =>
+
+= Още пример с my-bag
+
 = Списъци
+
+* Ползват се почти само за код
+* Едносвързан списък, пази се само началото
+* Стават за стек
+* Добавянето отпред е `O(1)`
+* Добавянето отзад е `O(n)`!
+* Достъпването на елемент по индекс също е `O(N)`
+
 = Речници
+
+= keywords – функции
+
+Ключовите думи могат да бъдат викани като функции и връщат елемента с ключ ключовата дума от колекцията, която сме им подали като аргумент.
+
+:annotate
+  (def users [{:name "Spinderman", :popularity 88} {:name "Baba" :popularity -3}])
+
+  (:name users) ; =>
+  (map :name users) ; =>
+
+
