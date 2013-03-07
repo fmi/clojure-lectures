@@ -321,6 +321,7 @@ functions on 10 data structures.</blockquote>
   (conj my-stack "salami") ; =>
   (peek my-stack)          ; =>
   (pop my-stack)           ; =>
+  (pop [])                 ; =>
 
 = Вектори
 == Други функции
