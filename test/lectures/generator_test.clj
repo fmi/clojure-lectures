@@ -10,6 +10,9 @@
        [:bold "foo"]   [:strong "foo"]
        [:bold "<img>"] [:strong "<img>"]
 
+       [:link "Foo" "/target"]   [:a {:href "/target"} "Foo"]
+       [:link :github "foo/bar"] [:a {:href "http://github.com/foo/bar" :class "github"} "foo/bar"]
+
        [:paragraph "Foo"]               [:p "Foo"]
        [:paragraph "Foo" [:bold "Bar"]] [:p "Foo" [:strong "Bar"]]
 
@@ -38,5 +41,3 @@
        [:section {:class "slide"}
         [:hgroup [:h1 [:code "Clojure"] " rocks"]]
         [:p "It is true!"]]))
-
-(run-tests)

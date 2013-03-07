@@ -26,6 +26,11 @@
   (testing "Bold text"
     (expect bold
             "*foo*"      [:bold "foo"]))
+  (testing "Links"
+    (expect link
+            "[Clojure](http://clojure.org/)" [:link "Clojure" "http://clojure.org/"]
+            "[http://clojure.org/]"          [:link "http://clojure.org/" "http://clojure.org/"]
+            "[gh:fmi/evans]"                 [:link :github "fmi/evans"]))
   (testing "Line of text"
     (expect text-line
             "Text"                  ["Text"]
@@ -33,7 +38,9 @@
             "Unmatched *asterix"    ["Unmatched *asterix"]
             "Text with `code`"      ["Text with " [:code "code"]]
             "Unmatched `backtick"   ["Unmatched `backtick"]
-            "Ending with newline\n" ["Ending with newline"]))
+            "Ending with newline\n" ["Ending with newline"]
+            "With [gh:fmi/clojure]" ["With " [:link :github "fmi/clojure"]]
+            "With [link](/target)"  ["With " [:link "link" "/target"]]))
   (testing "Bullet list"
     (expect bullet-list
             (with-margin "|* First

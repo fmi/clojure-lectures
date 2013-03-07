@@ -34,11 +34,29 @@
   "Matches *bold text*."
   (surrouned-by \* :bold))
 
+(def html-link
+  "Matches an link, like the ones in markdown - [name](target)."
+  (bind [title (between (sym* \[) (sym* \]) (chars-excluding \]))
+         href  (optional (between (sym* \() (sym* \)) (chars-excluding \))))]
+    (return [:link title (or href title)])))
+
+(def github-link
+  "Matches a link to a github repo."
+  (bind [user (>> (token* "[gh:") (chars-excluding \/))
+         repo (>> (sym* \/) (chars-excluding \]))
+         _    (sym* \])]
+    (return [:link :github (str user "/" repo)])))
+
+(def link
+  "Matches all kinds of links."
+  (<|> github-link html-link))
+
 (def text-line
   "Matches a single line of text that can include inline declarations like
    code blocks or bold text. Returns a vector of chunks."
   (bind [parsed (many (<|> (<:> inline-code)
                            (<:> bold)
+                           (<:> link)
                            non-newline))
          _ (optional new-line*)]
     (loop [result []

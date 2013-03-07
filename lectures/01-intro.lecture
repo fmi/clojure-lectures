@@ -1,8 +1,8 @@
 = Мета
 
-* <a href="https://github.com/fmi/clojure-lectures/">Слайдове</a>
+* Слайдовете са в GitHub - [gh:fmi/lectures]
 * Регистрирайте се на сайта
-* <a href="http://fmi.clojure.bg/polls/1/my_answer">Попълнете анкетата, моля</a>
+* [Попълнете анкетата, моля](http://fmi.clojure.bg/polls/1/my_answer)
 
 = Зайци
 
@@ -41,11 +41,11 @@
 
 = Документация
 
-* <a href="http://clojure.github.com/">http://clojure.github.com/</a> 1.4+
-* <a href="http://clojuredocs.org/">http://clojuredocs.org/</a> <= 1.3
+* [http://clojure.github.com/] 1.4+
+* [http://clojuredocs.org/] <= 1.3
 * `(doc let)`
-* <a href="http://clojure.org/cheatsheet">http://clojure.org/cheatsheet</a>
-* <a href="http://clojuredocs.org/quickref/Clojure%20Core">Clojure.org Quick Ref</a>
+* [http://clojure.org/cheatsheet]
+* [http://clojuredocs.org/quickref/Clojure%20Core](Clojure.org Quick Ref)
 
 = fn
 

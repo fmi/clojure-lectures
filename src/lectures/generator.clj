@@ -10,6 +10,7 @@
 (defn- generate-dispatch [ast]
   (cond (string? ast) :text
         (= :block (first ast)) (->> ast (take 2) (map name) (str/join "-") keyword)
+        (= [:link :github] (take 2 ast)) :link-github
         (keyword? (first ast)) (first ast)
         :else :text-line))
 
@@ -24,6 +25,12 @@
 
 (defmethod generate :bold [[_ text]]
   [:strong text])
+
+(defmethod generate :link [[_ title target]]
+  [:a {:href target} title])
+
+(defmethod generate :link-github [[_ _ repo]]
+  [:a {:href (str "http://github.com/" repo) :class "github"} repo])
 
 (defmethod generate :text-line [chunks]
   (mapv generate chunks))

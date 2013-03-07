@@ -167,7 +167,7 @@
 
 * Подробностите няма да са днес, но...
 * Синтаксис: `#"\d\d\d\w+"`
-* <a href="http://clojure.org/other_functions#Other%20Useful%20Functions%20and%20Macros-Regex%20Support">Clojure.org &rarr; Regex Support</a>
+* [Clojure.org &rarr; Regex Support](http://clojure.org/other_functions#Other%20Useful%20Functions%20and%20Macros-Regex%20Support)
 
 = Абстракции за колекции
 
@@ -185,7 +185,7 @@ Rich Hickey
 
 = Имплементации на абстракциите
 
-* Всички структури, за които ще говорим днес са <strong>immutable</strong> и <strong>persistent</strong> – веднъж насочим ли едно име към стойност, тя никога не се променя. При това без да губим скорост или памет.
+* Всички структури, за които ще говорим днес са *immutable* и *persistent* – веднъж насочим ли едно име към стойност, тя никога не се променя. При това без да губим скорост или памет.
 * Вектори
 * Списъци
 * Множества
@@ -213,8 +213,8 @@ Rich Hickey
 * За `n` = 1 000 000 000 елемента, <code>log<sub>32</sub>(n)</code> е шест стъпки
 * За сравнение, <code>log<sub>2</sub>(n)</code> е 30 стъпки
 * Може да мислите за него като "константно време за практически цели"
-* Ако сте смели <a href="http://www.amazon.com/Purely-Functional-Structures-Chris-Okasaki/dp/0521663504">Purely Functional Data Strctures</a>
-* Или <a href="http://www.cs.cmu.edu/~rwh/theses/okasaki.pdf">оригиналната публикация</a>
+* Ако сте смели, пробвайте [Purely Functional Data Structures](http://www.amazon.com/Purely-Functional-Structures-Chris-Okasaki/dp/0521663504)
+* Или [оригиналната публикация](http://www.cs.cmu.edu/~rwh/theses/okasaki.pdf)
 
 = Операции с вектори
 == (в неевклидови пространства)
