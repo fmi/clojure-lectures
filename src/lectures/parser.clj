@@ -100,7 +100,6 @@
   (<|> code-block
        bullet-list
        raw-html
-       (<*> (token* "foo") (token* "bar"))
        (>>= text-line #(return (into [:paragraph] %)))))
 
 (def slide
