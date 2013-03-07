@@ -367,7 +367,9 @@ functions on 10 data structures.</blockquote>
 
 Обикновено се ползват двойни кавички и курсив:
 
+{{{
 <blockquote>Alas, poor Yorick! I knew him, Horatio!</blockquote>
+}}}
 
 = Цитиране
 == ...а сега, в Clojure
