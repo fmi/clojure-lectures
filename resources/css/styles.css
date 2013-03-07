@@ -71,6 +71,7 @@ body{ background:#f5f6f6; }
 #deck pre { margin-bottom: 1em; }
 #deck kbd { font-family: Monaco, monospace; }
 #deck section:first-child hgroup { text-align: center; padding-top: 100px !important; }
+#deck sub { font-size: .83em; vertical-align: sub; }
 
 #deck table { border-collapse: collapse; margin-bottom: 2em; }
 #deck table th { background-color: #dddddd; }
