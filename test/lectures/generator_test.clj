@@ -28,6 +28,8 @@
        [:bullet-list [:static "Foo" [:bold "Bar"] "Baz"]]
        [:ul [:li "Foo" [:strong "Bar"] "Baz"]]
 
+       [:raw-html "<img />"] "<img />"
+
        [:slide ["Title"] ["Subtitle"]
         [:paragraph "Paragraph"]]
        [:section {:class "slide"}

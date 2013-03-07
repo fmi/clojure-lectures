@@ -60,6 +60,15 @@
             [:bullet-list
              [:static "First"]
              [:incremental "Second"]]))
+  (testing "Raw HTML"
+    (expect raw-html
+            (with-margin "|{{{
+                          |<strong>{}</strong>
+                          |}}}")
+            [:raw-html "\n<strong>{}</strong>\n"]
+
+            "{{{<img />}}}"
+            [:raw-html "<img />"]))
   (testing "Code blocks"
     (expect code-block
             (with-margin "|:code
@@ -121,6 +130,17 @@
             [:slide ["Slide with code"] nil
              [:paragraph "This is how to define increment:"]
              [:block :code "(defn increment [x]\n  (+ x 1))"]
+             [:paragraph "After the code"]]
+
+            (with-margin "|= Slide with raw HTML
+                          |
+                          |{{{
+                          |<img />
+                          |}}}
+                          |
+                          |After the code")
+            [:slide ["Slide with raw HTML"] nil
+             [:raw-html "\n<img />\n"]
              [:paragraph "After the code"]]))
   (testing "Presentation"
     (expect presentation

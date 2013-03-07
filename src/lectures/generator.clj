@@ -55,6 +55,9 @@
 (defmethod generate :static [[_ & chunks]]
   `[:li ~@(generate chunks)])
 
+(defmethod generate :raw-html [[_ html]]
+  html)
+
 (defmethod generate :slide [[_ title subtitle & chunks]]
   `[:section {:class "slide"}
     [:hgroup [:h1 ~@(generate title)]

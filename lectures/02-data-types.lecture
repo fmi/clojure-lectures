@@ -171,8 +171,11 @@
 
 = Абстракции за колекции
 
-<blockquote>It is better to have 100 functions operate on one data abstraction than 10 functions on 10 data structures.</blockquote>
-Rich Hickey
+{{{
+<blockquote>It is better to have 100 functions operate on one data abstraction than 10
+functions on 10 data structures.</blockquote>
+<p style="text-align: right">Rich Hickey</p>
+}}}
 
 * Различните абстракции за колекции в Clojure използват един и същи интерфейс, който не се влияе от имплементацията: `seq`, `conj`, `first`, `rest`, `count`…
 * Колекции – `conj`, `empty`, `count`, `=`, `seq`

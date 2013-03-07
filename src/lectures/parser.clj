@@ -89,10 +89,17 @@
                               (>> new-line* (return "")))))]
     (return [:block (keyword tag) (str/trim-newline (str/join "\n" lines))])))
 
+(def raw-html
+  "Matches a block of HTML."
+  (bind [html-code (between (token* "{{{") (token* "}}}")
+                            (<+> (many (>> (not-followed-by (token* "}}}")) any-char))))]
+    (return [:raw-html html-code])))
+
 (def slide-chunk
   "Matches a chunk in a slide."
   (<|> code-block
        bullet-list
+       raw-html
        (<*> (token* "foo") (token* "bar"))
        (>>= text-line #(return (into [:paragraph] %)))))
 
