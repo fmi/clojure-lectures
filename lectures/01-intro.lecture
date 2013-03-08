@@ -110,7 +110,7 @@
   (prn [10 "goto 20"])   ; => [10 "goto 20"]
 
 * `(print a)` извежда `(str a)`
-* `(println a)` е като `println` с нов ред накрая
+* `(println a)` е като `print` с нов ред накрая
 * `(pr a)` извежда `(pr-str a)`
 * `(prn a)` е като `pr` с нов ред накрая
 
