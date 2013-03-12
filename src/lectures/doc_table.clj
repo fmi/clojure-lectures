@@ -1,6 +1,7 @@
 (ns lectures.doc-table
   (:require clojure.repl
-            [clojure.string :as str])
+            [clojure.string :as str]
+            clojure.set)
   (:use [clojure.walk :only (postwalk)]))
 
 (def ^:dynamic *doc-table*)
