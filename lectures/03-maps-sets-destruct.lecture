@@ -18,7 +18,7 @@
 
 * Имате първо домашно, до четвъртък
 * Имате първо предизвикателство, до утре
-* И двете приключват в 19:00
+* И двете приключват в 17:00
 * Въпроси?
 
 = Конвенции
@@ -26,17 +26,13 @@
 * Много от вашия код на сайта е лошо подравнен
 * Искаме да спазвате стриктни конвенции
 * Може да ги намерите в GitHub: [gh:bbatsov/clojure-style-guide]
-* Ще си затворим учите за първото домашно (и предизвикателство)
+* Ще си затворим очите за първото домашно (и предизвикателство)
 * От там нататък, нарушенията ще струват точки
 * Първото нарушение е гратис, следващите са по една точка
 * В реда на нещата е кода ви да работи, но да получите 0 точки заради неспазване на конвенции
 * Няма да коментираме неща, които не спазват конвенциите (освен "Това не спазва конвенциите")
 * Същото важи и за проекта
 * Capisce?
-
-= Въпроси към вас
-
-Да си припомним за какво говорихме миналия път.
 
 = maps
 
@@ -52,7 +48,7 @@
 :annotate
   {}
   {:name "Luke Skywalker" :job "Jedi" :gender :male}
-  {:name "Inertia Creeps" :album "Mezzanine" :artist "Massive Attack"}
+  {:name "Inertia Creeps" :album "Mezzanine"}
   {1 "one", 2 "two", 3 "three"}
 
 = maps
@@ -67,7 +63,10 @@
 == Достъпване
 
 :annotate
-  (def song {:name "Inertia Creeps" :album "Mezanine" :artist "Massive Attack"})
+  (def song
+    {:name "Inertia Creeps"
+     :album "Mezanine"
+     :artist "Massive Attack"})
 
   ; map-овете са функции
   (song :name)  ; =>
@@ -312,6 +311,73 @@
   (assoc {:one 1 :two 2} :one :ein)
   ; =>
 
+= Вложени колекции
+== get-in
+
+`get-in` рови във вложена колекция.
+
+:annotate
+  (def numbers
+    {:english [:zero  :one  :two  :three]
+     :swedish [:nolla :ett  :tvaa :tre]
+     :german  [:null  :eins :zwei :drei]})
+
+  (get-in numbers [:english 1]) ; =>
+  (get-in numbers [:swedish 0]) ; =>
+  (get-in numbers [:german 2])  ; =>
+
+  (get-in numbers [:french 2])  ; =>
+  (get-in numbers [:swedish 4]) ; =>
+
+= Вложени колекции
+== assoc-in
+
+`assoc-in` променя вложена колекция
+
+:annotate
+  (def numbers
+    {:english [:zero :one] :swedish [:nolla :ett] })
+
+  (assoc-in numbers [:english 0] :oh)
+  ; =>
+
+  (assoc-in numbers [:swedish 1] :en)
+  ; =>
+
+  ; Ако липсва някое звено, assoc-in поставя map
+  (assoc-in numbers [:german 1] :eins)
+  ; =>
+
+  ; Ако индекса не е подходящ, има изключение
+  (assoc-in numbers [:swedish :foo] :bar)
+  ; =>
+
+= Вложени колекции
+== update-in
+
+`update-in` е като `assoc-in`, ама получава функция:
+
+:annotate
+  (def people {:jesus {:age 33}})
+
+  (update-in people [:jesus :age] inc)
+  ; =>
+
+= Циклични структури
+
+Можем ли да направим map, който реферира към себе си?
+
+Една идея би била:
+
+:code
+  (def chunk {:prev {} :next {} :self nil})
+
+  (def chunk (assoc chunk :self chunk))
+
+* Това няма да сработи
+* `(chunk :self)` ще сочи към стария, map
+* Въобще, няма как да го направите
+
 = Равенство на колекции
 
 Има три класа на еквивалентност - последователни, множества и мапове. Колекции от всеки клас са равни на колекции от същия клас ако имат еднакви елементи. Колекции от различни класове не са равни помежду си.
@@ -332,6 +398,7 @@
 Не забравяйте, че има няколко различни имплементации на множества и мапове.
 
 = for
+== a.k.a list comprehension
 
 `for` ви дава list comprehension в Clojure:
 
