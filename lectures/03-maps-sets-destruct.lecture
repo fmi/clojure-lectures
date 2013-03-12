@@ -52,6 +52,7 @@
 == Синтаксис
 
 :annotate
+  {}
   {:name "Luke Skywalker" :job "Jedi" :gender :male}
   {:name "Inertia Creeps" :album "Mezzanine" :artist "Massive Attack"}
   {1 "one", 2 "two", 3 "three"}
@@ -93,7 +94,7 @@
   (assoc numbers :four 4)
   ; =>
 
-  ; Премахване на елемент
+  ; Премахване на елемент по ключ
   (dissoc numbers :two)
   ; =>
 
@@ -106,9 +107,11 @@
   ; =>
   (into numbers [[:four 4] [:five 5]])
   ; =>
+  (into numbers {:one "Ho-ho-ho!" :seven 7})
+  ; =>
 
 = maps
-== Достъпване на ключове
+== Достъпване по ключове
 
 Всъщност, имате три варианта:
 
@@ -127,6 +130,9 @@
 
   ; Keyword-ите също са функции
   (:name track)                ; =>
+
+  ; Имаме и `find`, който връща `MapEntry`
+  (find track :name)           ; =>
 
 * Използвайте keyword-и като функции, понеже е консистентно с `defrecord`...
 * ...иначе ползвайте map-а като функция...
