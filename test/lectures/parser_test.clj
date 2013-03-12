@@ -132,6 +132,13 @@
              [:block :code "(defn increment [x]\n  (+ x 1))"]
              [:paragraph "After the code"]]
 
+            (with-margin "|= Slide with bold text
+                          |
+                          |*Bold text* here!")
+
+            [:slide ["Slide with bold text"] nil
+             [:paragraph [:bold "Bold text"] " here!"]]
+
             (with-margin "|= Slide with raw HTML
                           |
                           |{{{

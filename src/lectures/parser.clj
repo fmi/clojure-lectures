@@ -74,9 +74,9 @@
 (def bullet-list
   "Matches a bullet list. List items can be declared with * for incremental
    items and + for static items."
-  (bind [lines (many1 (<*> (<|> (sym* \*) (sym* \+))
+  (bind [lines (many1 (<*> (<|> (token* "* ") (token* "+ "))
                            (skip-ws text-line)))]
-    (let [item-tag {\* :incremental, \+ :static}
+    (let [item-tag {"* " :incremental, "+ " :static}
           items (vec (for [[sym line] lines]
                        (into [(item-tag sym)] line)))]
       (return (->> items (cons :bullet-list) vec)))))
