@@ -13,11 +13,201 @@
 
 = `bisect`
 
+:code
+  (defn bisect [f neg-point pos-point close-enough?]
+    (let [mid (/ (+ neg-point pos-point) 2)]
+      (if (close-enough? neg-point pos-point)
+        mid
+        (let [f-mid (f mid)]
+          (cond
+            (pos? f-mid) (recur f neg-point mid close-enough?)
+            (neg? f-mid) (recur f mid pos-point close-enough?)
+            :else mid)))))
+
 = `make-bisector`
 
-= Наивна опашка
+:code
+  (defn abs [x]
+    (if (pos? x) x (- x)))
+
+  (defn make-bisector [tolerance]
+    (fn [f a b]
+      (let [a-value (f a)
+            b-value (f b)
+            close-enough? #(< (abs (- %1 %2)) tolerance)]
+        (cond
+          (and (neg? a-value)
+               (pos? b-value))
+          (bisect f a b close-enough?)
+
+          (and (pos? a-value)
+               (neg? b-value))
+          (bisect f b a close-enough?)
+
+          :else nil))))
+
+= Опашка
+
+* Не е супер тривиално
+* Не е супер полезно
+* Има вградена
+
+= Опашка със cheat кодве
+
+В Clojure има `clojure.lang.PersistentQueue`:
+
+:annotate
+  (def make-queue #(clojure.lang.PersistentQueue/EMPTY))
+  (def push-to-queue conj)
+  (def peek-at-queue first)
+  (def pop-from-queue pop)
+  (def empty-queue? empty?)
+
+= Наивна опашка (1)
+
+:annotate
+  (defn make-queue [] [])
+  (defn push-to-queue [q x] (conj q x))
+  (defn peek-at-queue [q] (first q))
+  (defn pop-from-queue [q] (vec (rest q)))
+  (defn empty-queue? [q] (empty? q))
+
+Какви са проблемите?
+
+* На всеки pop прави копие на вектора
+* Няма да има структурно споделяне
+* Изключително бавно, ако се опашката има повече елементи
+
+= Наивна опашка (2)
+
+:annotate
+  (defn make-queue [] [])
+  (defn empty-queue? [q] (empty? q))
+  (defn push-to-queue [q x] (conj q x))
+  (defn peek-at-queue [q] (first q))
+  (defn pop-from-queue [q] (if (empty-queue? q) [] (subvec q 1)))
+
+Какви са проблемите?
+
+* `subvec` връща бързо "подопашка"
+* `conj` на `subvec` връща бързо нов `subvec`
+* Дотук добре, но вектора никога е намалява
+* Елементите в опашката никога не се освобождават
+* Ето ви memory leak
 
 = Опашка с мап
+== Версията на Стефан
+
+:annotate
+  (defn make-queue []
+    {:front 0 :back 0})
+
+  (defn empty-queue?
+    [{:keys [front back]}]
+    (= front back))
+
+  (defn push-to-queue
+    [{:keys [back] :as queue} item]
+    (merge queue {back item :back (inc back)}))
+
+  (defn peek-at-queue
+    [{:keys [front] :as queue}]
+    (queue front))
+
+  (defn pop-from-queue
+    [{:keys [front] :as queue}]
+    (if-not (empty-queue? queue)
+      (dissoc (assoc queue :front (inc front) front))
+      queue))
+
+= Опашка с мап
+== Версията на Ники
+
+:annotate
+  (defn make-queue [] {:front 0 :values {}})
+
+  (defn empty-queue? [{:keys [front values]}]
+    (empty? values))
+
+  (defn push-to-queue [{:keys [front values]} x]
+    {:front front :values (assoc values (+ front (count values)) x)})
+
+  (defn peek-at-queue [{:keys [front values]}]
+    (values front))
+
+  (defn pop-from-queue [{:keys [front values] :as queue}]
+    (if-not (empty-queue? queue)
+      {:front (inc front) :values (dissoc values front)}
+      queue))
+
+= Ефективна имплементация
+== Два вектора
+
+:annotate
+  (defn make-queue
+    []
+    {:front nil :back []})
+
+  (defn push-to-queue
+    [{:keys [front back]} item]
+    {:front front :back (conj back item)})
+
+  (defn peek-at-queue
+    [{:keys [front back]}]
+    (first (or front back)))
+
+  (defn pop-from-queue
+    [{:keys [front back]}]
+    (if (seq front)
+      {:front (next front) :back back}
+      {:front (next back) :back []}))
+
+  (defn empty-queue?
+    [{:keys [front back]}]
+    (and (empty? front) (empty? back)))
+
+= Ефективна имплементация
+== Два вектора (2)
+
+* Относително константни операции
+* Добавянето на елемент е константно
+* Вземането на елемент - също
+* Както и местенето от `:back` към `:front`
+* Но целия `front` се пази, което може да е проблем откъм памет
+
+= Ефективна имплементация
+== Вектор и списък
+
+:annotate
+  (defn make-queue
+    []
+    {:front nil :back []})
+
+  (defn push-to-queue
+    [{:keys [front back]} item]
+    {:front front :back (conj back item)})
+
+  (defn peek-at-queue
+    [{:keys [front back]}]
+    (first (or front back)))
+
+  (defn pop-from-queue
+    [{:keys [front back]}]
+    (if (seq front)
+      {:front (next front) :back back}
+      {:front (next (apply list back)) :back []}))
+
+  (defn empty-queue?
+    [{:keys [front back]}]
+    (and (empty? front) (empty? back)))
+
+= Ефективна имплементация
+== Вектор и списък (2)
+
+* Малко по-бавно поради прехвърлянето от вектор към списък
+* По-ефективно откъм памет
+* `(apply list (next v))` понеже `(list* (next v))` не връща списък
+* Go figure
 
 = Стрелки
 
@@ -26,21 +216,46 @@
 + Няма нужда да подаваме ламбди, изрази са достатъчни.
 + Дори някой от изразите да не е списък, стреките го правят списък.
 
-`->` слага стоността на *второ* място в списъка (първи аргумент)
+`->` слага стойността на *второ* място в списъка (първи аргумент)
 :code
-  (-> make-queue (push-to-queue "baba") (push-to-queue "dyado") pop-from-queue peek-at-queue)
+  (-> (make-queue)
+      (push-to-queue "baba")
+      (push-to-queue "dyado")
+      pop-from-queue
+      peek-at-queue)
 
 
-`->` слага стоността на *последно* място в списъка (последен аргумент)
+`->>` слага стойността на *последно* място в списъка (последен аргумент)
 :annotate
   (->> (range 10) (filter even?) (map #(* % %)) (reduce +))
   ; =>
 
+= Хистограма
 
+* Не е толкова важно как ще я решите
+* Разгледайте чуждите решения на сайта и вижте какво ще научите
+* Следват две от нас
 
-= Още решения
 
 = Хистограма
+== Първо решение
+
+:annotate
+  (defn histogram
+    [numbers]
+    (reduce #(update-in %1 [%2] inc)
+            (-> (apply max numbers) inc (repeat 0) vec)
+            numbers))
+
+= Хистограма
+== Второ решение
+
+:annotate
+  (defn histogram
+    [xs]
+    (let [freqs (frequencies xs)]
+      (mapv #(freqs % 0)
+            (->> freqs keys (apply max) inc range))))
 
 = Рапончо
 
@@ -87,17 +302,23 @@
 :annotate
   (def strings ["baba" " loves " "kuncho"])
 
-  (str strings)                                               ; =>
+  (str strings)
+  ; =>
 
-  (apply str strings)                                         ; =>
+  (apply str strings)
+  ; =>
 
-  (str (strings 0) (strings 1) (strings 2))                   ; =>
+  (str (strings 0) (strings 1) (strings 2))
+  ; =>
 
-  (apply str (first strings) (rest strings))                  ; =>
+  (apply str (first strings) (rest strings))
+  ; =>
 
-  (apply str (first strings) (second strings) ["kuncho"])     ; =>
+  (apply str (first strings) (second strings) ["kuncho"])
+  ; =>
 
-  (apply max [1 2 2765234])                                   ; =>
+  (apply max [1 2 2765234])
+  ; =>
 
 = `apply` и макроси
 
@@ -229,3 +450,12 @@
 
   (let [r (range 1e9)] [(last r) (first r)])
   ; java.lang.OutOfMemoryError: GC overhead limit exceeded
+
+= Няколко функции за мързило-безкрайни поредици
+
+:annotate
+  (def p (take 5 (repeat 10)))
+  (realized? p) ; =>
+
+  (vec p)       ; =>
+  (realized? p) ; =>
