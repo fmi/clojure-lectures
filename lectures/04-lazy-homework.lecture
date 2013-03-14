@@ -1,0 +1,184 @@
+= Предният път
+
+* мапита, множества, консота
+* почти всичко е функция
+* стандартните операции работят на почти всичко
+* деструктиране
+* `for`
+
+= Днес
+
+* Решения на домашно и предизвикателство
+* Мързеливи поредици
+
+= `bisect`
+
+= `make-bisector`
+
+= Наивна опашка
+
+= Опашка с мап
+
+= Стрелки
+
+Сумата на първите 10 четни точни квадрата
+
+= Още решения
+
+= Хистограма
+
+= Кънчо
+
+Много умен, леко заекво-фъфли, може да говори безкрайно, всяка дума започва със следващата буква от азбуката на последната от предната дума.
+
+{{{
+<img src="04-lazy-homework/nerd.jpg" alt="Кънчо – nerd">
+}}}
+
+= Извличане на думи от Кънчо
+
++ Искаме да вземем колкото думи си поискаме (Кънчо може да говори вечно!)
++ Искаме да можем да ги получим като вектор, да ги отпечатваме и т.н.
+
+= Имплементация на помощни ф-ии 1/2
+:annotate
+  (def initial-word "Hi" )
+
+  (defn next-letter [letter]
+    (char (+ 97 (mod (inc (- (int letter) 97)) 26))))
+
+  (defn rand-word-length []
+    (+ 4 (rand-int 6)))
+
+  (defn rand-letter []
+    (char (+ 97 (rand-int 26))))
+
+  (defn rand-word []
+    (apply str (take (rand-word-length) (repeatedly rand-letter))))
+
+  (defn rand-word-starting-with [letter]
+    (str letter (rand-word)))
+
+  (defn next-word [word]
+    (rand-word-starting-with (next-letter (last word))))
+
+  (next-word "baba") ; =>
+  (next-word "hazz") ; =>
+
+= `apply`
+
+Когато искаме да подадем много аргументи на функция, но ги имаме само в поредица.
+
+:annotate
+  (def strings ["baba" " loves " "kuncho"])
+
+  (str strings)                                               ; =>
+
+  (apply str strings)                                         ; =>
+
+  (str (strings 0) (strings 1) (strings 2))                   ; =>
+
+  (apply str (first strings) (rest strings))                  ; =>
+
+  (apply str (first strings) (second strings) ["kuncho"])     ; =>
+
+  (apply max [1 2 2765234])                                   ; =>
+
+= `apply` и макроси
+
+Не може да го ползваме с макроси:
+:code
+  (apply and [true :baba nil (+ 1 2)])
+  ; CompilerException java.lang.RuntimeException: Can't take value of a macro:
+
+= `repeatedly`
+
+Когато искаме да викнем функция безкрайно много пъти пъти, най-често със странични ефекти.
+
+`repeatedly` ни връща безкрайна поредица, `take` връща първите `n` елемента от каквато и да е поредица.
+
+:code
+  (defn all-the-randoms [n]
+    (take n (repeatedly #(rand-int 10))))
+
+  (all-the-randoms 5)
+
+= `take-words`
+
+Дава ни вектор с `n` на брой случайни думи
+
+:code
+  (defn take-words
+    ([n]
+      (take-words-rec (dec n) [initial-word]))
+    ([n words]
+      (if (= n 0)
+        words
+        (take-words (dec n) (conj words (next-word (last words)))))))
+
+  (take-words-rec 20000) ; StackOverflowError
+
+= recurза се
+
+:code
+  (defn take-words
+    ([n]
+      (take-words-rec (dec n) [initial-word]))
+    ([n words]
+      (if (= n 0)
+        words
+        (recur (dec n) (conj words (next-word (last words)))))))
+
+  (count (take-words-rec 20000)) ; 20000
+
+= и с `loop`
+
+:code
+  (defn take-words [n]
+    (loop [i (dec n) words [initial-word]]
+      (if (= i 0)
+        words
+        (recur (dec i) (conj words (next-word (last words)))))))
+
+= `print-words`
+
+Ако искаме да отпечатаме думите, `print-words` е сходна
+
+:code
+  (defn print-words [n]
+    (loop [i (dec n) word initial-word]
+      (when (> i 0)
+        (print word " ")
+        (recur (dec i) (next-word word)))))
+
+= `map-words`
+
+Да си напишем `map` също е доста лесно:
+
+:code
+  (defn map-words [n f]
+    (loop [i (dec n) word (f initial-word)]
+      (when (> i 0)
+        (print word " ")
+        (recur (dec i) (f (next-word word))))))
+
+  (map-words 5 #(str "!" %)) ; !Hi  !jvoyzdpvc  !dueafz  !acrqd
+
+= Абстракция! Абстракция! Абстракция!
+
+По-добре да имаме 100 функции, които работят върху една абстракция, нали? Ние отиваме в другата посока, вместо да ползваме вградените функции.
+
+Колко по-яко би било ако можеше да ползваме просто:
+
+:code
+  (take 5 (words))
+
+  (doseq [words (take 5 words)]
+    (print word))
+
+  (map #(str "!" %) (take 5 words))
+
+  (filter I-undestand (take 5 words))
+
+= `lazy-seq`
+
