@@ -173,12 +173,31 @@
 :code
   (take 5 (words))
 
-  (doseq [words (take 5 words)]
+  (doseq [word (take 5 (words))]
     (print word))
 
-  (map #(str "!" %) (take 5 words))
+  (map #(str "!" %) (take 5 (words)))
 
-  (filter I-undestand (take 5 words))
+  (filter I-undestand (take 5 (words)))
 
 = `lazy-seq`
 
+Всъщност можем :-) Enter lazy sequences.
+
+`lazy-seq` не се изпълнява веднага, а само когато се опитаме да достъпим тази част на поредицата.
+
+:code
+  (defn words
+    ([]
+      (words initial-word))
+    ([word]
+      (lazy-seq
+        (cons word (words (next-word word))))))
+
+= Нагледно
+
+{{{
+<img src="04-lazy-homework/lazy-seq.png" alt="рисунка на lazy-seq">
+}}}
+
+= Не си губете главата!
