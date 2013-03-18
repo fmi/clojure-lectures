@@ -450,12 +450,3 @@
 
   (let [r (range 1e9)] [(last r) (first r)])
   ; java.lang.OutOfMemoryError: GC overhead limit exceeded
-
-= Няколко функции за мързило-безкрайни поредици
-
-:annotate
-  (def p (take 5 (repeat 10)))
-  (realized? p) ; =>
-
-  (vec p)       ; =>
-  (realized? p) ; =>
