@@ -1,0 +1,147 @@
+= qsort
+== бързо и лесно!
+
+* Стар и красив алгоритъм
+* `O(n×log₂(n))` в средния, `O(n²)` в най-лошия случай
+* Все пак в повечето случаи е по-бърз от другите логаритмични
+* Разделяй и владей
+* На всяка стъпка избираме случаен елемент – пивот
+* Намираме всички елементи, които са по-малки от него и ги сортираме със същия алгоритъм
+* Намираме всички елементи, които са по-големи или равни от него и ги сортираме със същия алгоритъм
+* *сортирани по-малки* пивот *сортитани по-големи*
+
+= qsort
+== имплементация
+
+:annotate
+
+  (defn qsort [xs]
+    (if (seq xs)
+      (let [pivot (first xs)
+            smaller? #(< % pivot)
+            xs (rest xs)]
+        (concat
+          (qsort (filter smaller? xs))
+          [pivot]
+          (qsort (remove smaller? xs))))
+      xs))
+
+  (qsort [7 9 -1 3 61 8]) ; =>
+
+= qsort
+== лог
+
+:code
+  (defn qsort [xs]
+    (if (seq xs) (println "qsort" xs))
+    (if (seq xs)
+      (let [pivot (first xs)
+            smaller? #(< % pivot)
+            xs (rest xs)]
+        (concat
+          (qsort (filter smaller? xs))
+          [pivot]
+          (qsort (remove smaller? xs))))
+      xs))
+
+  (qsort [7 9 -1 3 61 8]) ; (-1 3 7 8 9 61)
+
+= qsort
+== лог
+
+{{{
+<pre>
+qsort [7 9 -1 3 61 8]
+pivot 7
+qsort (-1 3)
+pivot -1
+qsort (3)
+pivot 3
+qsort (9 61 8)
+pivot 9
+qsort (8)
+pivot 8
+qsort (61)
+pivot 61
+</pre>
+}}}
+
+= qsort
+== само първите 2
+
+:code
+  (take 2 (qsort [7 9 -1 3 61 8])) ; (-1 3 7 8 9 61)
+
+{{{
+<pre>
+qsort [7 9 -1 3 61 8]
+pivot 7
+qsort (-1 3)
+pivot -1
+qsort (3)
+pivot 3
+qsort (9 61 8)
+pivot 9
+qsort (8)
+pivot 8
+qsort (61)
+pivot 61
+</pre>
+}}}
+
+= qsort
+== lazy
+
+* за да не смятаме всичко ни трябва итеративен алгоритъм
+* ще представим цялата структура във вида: `(поредица) число (поредица) число … (поредица)`
+
+= qsort
+== lazy имплементация
+
+:annotate
+
+  (defn sort-parts [work]
+    (lazy-seq
+      (loop [[part & parts] work]
+        (if-let [[pivot & xs] (seq part)]
+          (letfn [(smaller? [x] (< x pivot))]
+            (recur (list*
+                     (filter smaller? xs)
+                     pivot
+                     (remove smaller? xs)
+                     parts)))
+          (when-let [[x & parts] parts]
+            (cons x (sort-parts parts)))))))
+
+  (defn lazy-qsort [xs]
+    (sort-parts (list xs)))
+
+  (lazy-qsort [7 9 -1 3 61 8]) ; =>
+
+
+= qsort
+== lazy имплементация
+
+:code
+
+  (defn sort-parts [work]
+    (println "lazy" work)
+    (lazy-seq
+      (loop [[part & parts] work]
+        (println "loop" part parts)
+        (if-let [[pivot & xs] (seq part)]
+          (letfn [(smaller? [x] (< x pivot))]
+            (recur (list*
+                     (filter smaller? xs)
+                     pivot
+                     (remove smaller? xs)
+                     parts)))
+          (when-let [[x & parts] parts]
+            (cons x (sort-parts parts)))))))
+
+  (defn lazy-qsort [xs]
+    (sort-parts (list xs)))
+
+  (lazy-qsort [7 9 -1 3 61 8]) ; [7 9 -1 3 61 8]
+
+
