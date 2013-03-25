@@ -27,16 +27,16 @@
 :code
   (defn choose-wisely
     [condition slow-consequence]
-    (if-let [good-enough (force condition)]
+    (if (force condition)
       (force slow-consequence)
       false))
 
   (choose-wisely (delay :looks-good)
-                 (delay (do (Thread/sleep 5*24*3600*60*1000) :i-did-it!))
+                 (delay (do (Thread/sleep (* 5 24 60 60 1000)) :i-did-it!)))
   ; :i-did-it!
 
   (choose-wisely (delay false)
-                 (delay (do (Thread/sleep 5*24*3600*60*1000) :i-did-it!))
+                 (delay (do (Thread/sleep (* 5 24 60 60 1000)) :i-did-it!)))
   ; false
 
 = delay & force
@@ -47,12 +47,12 @@
 :code
   (defn choose-wisely
     [condition slow-consequence]
-    (if-let [good-enough (condition)]
+    (if (condition)
       (slow-consequence)
       false))
 
   (choose-wisely (constantly :looks-good)
-                 #(do (Thread/sleep 5*24*3600*60*1000) :i-did-it!))
+                 #(do (Thread/sleep (* 5 24 60 60 1000)) :i-did-it!))
 
 = delay & force
 == leaky алтернатива
@@ -64,12 +64,12 @@
 :code
   (defn choose-wisely
     [condition slow-consequence]
-    (if-let [good-enough (if (delay? condition) (force condition) condition)]
+    (if (if (delay? condition) (force condition) condition)
       (force slow-consequence)
       false))
 
   (choose-wisely :looks-good
-                 (delay (do (Thread/sleep 5*24*3600*60*1000) :i-did-it!))
+                 (delay (do (Thread/sleep (* 5 24 60 60 1000)) :i-did-it!)))
 
 = qsort
 == бързо и лесно!
