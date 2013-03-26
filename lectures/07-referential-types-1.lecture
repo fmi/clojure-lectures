@@ -1,0 +1,761 @@
+= Референтни типове
+
+* Типове, които "сочат към стойност" към стойност:
+* Може да се променя накъде сочи всеки от тях
+* Структурата към която типа сочи остава непроменена
+* Въвеждат идентичност
+* atom, ref, agent и var
+
+= Днес
+
+* Futures
+* Атоми (atoms)
+* Vars (променливи)
+* Метаданни
+* Динамични променливи
+
+= Преди това
+
+* Извод от втора задача: почвайте по-рано
+* Имате трета задача
+* Имате още едно предизвикателство
+
+= [gh:fmi/clojure-examples]
+
+* Кой погледна repo-то?
+* Има го примера с lazy qsort
+* Има примери и от днес
+* Вижте го вкъщи
+
+= doall
+== Ей така, отникъде
+
+`doall` оценява мързелива колекция и я връща:
+
+:code
+  ; Не принтира нищо
+  (def silent (map prn (range 100)))
+
+  ; Принтира всички числа от 0 до 99
+  (def loud (doall (map prn (range 100))))
+
+= Future
+
+* Проста форма на паралелизъм.
+* `future` взема неограничено количество форми, които пуска в отделна нишка.
+* Връща обект, от който може да се вземе стойността на последната форма, подадена на `future`.
+* Стойността може да се вземе с `(deref f)`, където `f` е върнатия от `future` обект.
+
+= Future
+== Пример
+
+:code
+  (def deep-thought
+    (future (Thread/sleep 1000)
+            (println "Found the answer!")
+            42))
+  (println "Searching for the answer...")
+  (deref deep-thought) ; 42
+
+  ; Searching for the answer...
+  ; Found the answer!
+
+
+= Future
+== deref с timeout
+
+`deref` опционално взема втори и трети аргумент, които са timeout време и аргумент, който да върне.
+
+:code
+  (def deep-thought
+    (future (Thread/sleep 1000)
+            42))
+
+  (deref deep-thought 500 :not-found) ; :not-found
+  (deref deep-thought 1500 :unfound)  ; 42
+
+= Deref
+== @
+
+`deref` има reader макрос `@`, т.е. `(deref foo)` и `@foo` е едно и също.
+
+:code
+  (def deep-thought
+    (future (Thread/sleep 1000)
+            42))
+
+  @deep-thought ; 42
+  (println @deep-thought)
+
+= Deref
+== Delays
+
+`deref` работи и за `delay`-ове:
+
+:annotate
+  (def answer (delay (* 6 9)))
+
+  (deref answer) ; =>
+  @answer        ; =>
+
+* Ако знаем че имаме `delay`, което предпочитаме: `force` или `deref`?
+* `force`, защото `(force 5)` връща 5, докато `(deref 5)` - грешка.
+
+= Future
+== realized?
+
+`realized?` (помните ли `delay`?) също работи:
+
+:code
+  (def deep-thought
+    (future (Thread/sleep 1000)
+            42))
+
+  (realized? deep-thought) ; false
+  (Thread/sleep 2000)
+  (realized? deep-thought) ; true
+
+= shutdown-agents
+
+* Поради ред причини, ако има пуснати future-и, Clojure ще чака около минута след края на програмата, преди да излезе
+* Това лесно може да се реши с добавяне на едно `(shutdown-agents)` на края на програмата
+* Имплементационни детайли, thread pool-ове, у-а
+* Засега запомнете, по-натам ще правим дисекция
+
+= Entity vs. Value Object
+== Лирично отклонение
+
+* Следват термини, които не са от Clojure, но ще бъдат полезни
+* Entity е обект, който има идентичност
+* Value object е обект, който е просто стойност, без идентичност
+* Value object-и с една и съща стойност са равни
+* Примери за value object-и са числото 4 и списъка от 2 и 42
+* Entity обектите обикновено се сравняват по "място в паметта", а не по стойност
+* Примери за entity обекти са хора и автомобили
+* Двама човека на една и съща възраст и с едно и също име не са един и същ човек
+* Value-тата обикновено са immutable, entity-тата обикновено са mutable
+* Entity-тата обикновено имат история и текущо състояние
+* Тези термини не са приети в Clojure и няма да ги ползваме, но са полезни
+* Референтните типове в Clojure ни дават entity, докато колекциите - value
+
+= Атоми
+
+* Прост референтен тип
+* Предлага атомарно обновяване на данните в него
+* Създава се със `(atom val)`, където `val` е някаква стойност
+* По идея се използва с immutable колекциите на Clojure
+* Текущата стойност се взема с `deref`
+
+= Атоми
+== Създаване и вземане на стойност
+
+:annotate
+  (def answer (atom 42))
+
+  answer  ; =>
+  @answer ; =>
+
+= Атоми
+== Промяна на стойност
+
+* Промяната на стойност става с `(swap! an-a func)`.
+* Clojure прилага `func` на стойността на атома, и подменя стойността му с резултата
+* Този подход с подаване на функция, която да върне новата стойност се ползва и от другите референтни типове
+
+= Атоми
+== Пример със swap!
+
+:annotate
+  (def counter (atom 1))
+
+  @counter ; =>
+
+  (swap! counter inc)
+  @counter ; =>
+
+  (swap! counter (fn [n] (/ 1 n)))
+  @counter ; =>
+
+= Атоми
+== Семантика на swap!
+
+* Подадената функция трябва да изчисли новата стойност използвайки старата
+* Ако докато `swap!` изпълнява функцията, друга нишка промени атома, `swap!` ще изпълни функцията отново
+* Поради последната причина, функцията подадена на `swap!` трябва да е без странични ефекти
+* По този начин се гарантира консистентност - функцията винаги работи с последната стойност
+
+= Атоми
+== Retry
+
+:code
+  (defn slow-inc [x]
+    (printf "Incrementing %s slowly...\n" x)
+    (Thread/sleep 100)
+    (inc x))
+
+  (defn very-slow-inc [x]
+    (printf "Incrementing %s very slowly...\n" x)
+    (Thread/sleep 500)
+    (inc x))
+
+  (future (swap! number very-slow-inc))
+  (future (swap! number slow-inc))
+
+  ; Incrementing 0 very slowly...
+  ; Incrementing 0 slowly...
+  ; Incrementing 1 very slowly...
+
+= Атоми
+== Обновяване
+
+Цялото изчисление на новата стойност трябва да е във функцията, подадена на `swap!`. Долния код е неконсистентен.
+
+:code
+  (def incorrect (atom 0))
+
+  (dotimes [_ 10000]
+    (future (let [new-val (inc @incorrect)]
+              (swap! incorrect (fn [_] new-val)))))
+
+  (Thread/sleep 2000)
+  @incorrect ; 7011
+
+= Атоми
+== swap! с повече аргументи
+
+Ако подадете допълнителни аргументи на `swap!`, той ги подава на функцията след стойността на атома.
+
+:annotate
+  (def counter (atom 1))
+
+  @counter ; =>
+
+  (swap! counter + 9)
+  @counter ; =>
+
+  (swap! counter / 2)
+  @counter ; =>
+
+
+= Атоми
+== Валидатори
+
+Атомите могат да получават опционален валидатор, който е функция на един аргумент:
+
+:annotate
+  (def counter (atom 2 :validator pos?))
+
+  (swap! counter dec) ; =>
+  @counter            ; =>
+
+  (swap! counter dec) ; =>
+  @counter            ; =>
+
+= Атоми
+== get-validator, set-validator!
+
+Валидаторите могат да се достъпват и с `get-validator` и `set-validator!`
+
+:annotate
+  (def counter (atom 2 :validator pos?))
+
+  (get-validator counter)
+  ; =>
+
+  (set-validator! counter even?)
+  (get-validator counter)
+  ; =>
+
+  (swap! counter dec)
+  ; =>
+
+= Атоми
+== reset!
+
+`(reset! atom new-val)` слага `new-val` като стойност на атома.
+
+:annotate
+  (def answer (atom 42))
+
+  (reset! answer :unknown)
+
+  @answer ; =>
+
+Има валидни употреби (напр. чистене на кеш), макар че е по-добре да ползвате `swap!` за да не изпаднете в проблема от преди малко.
+
+= Атоми
+== compare-and-set!
+
+`(compare-and-set! atom old-val new-val)` променя стойността на атома на `new-val` само ако текущата му стойност е `old-val`. Връща `true` или `false` взависимост от това дали е успешно.
+
+:annotate
+  (def answer (atom 42))
+
+  (compare-and-set! answer 42 43) ; =>
+  @answer                         ; =>
+
+  (compare-and-set! answer 42 99) ; =>
+  @answer                         ; =>
+
+`swap!` всъщност е [реализирано](https://github.com/clojure/clojure/blob/8fda34e4c77cac079b711da59d5fe49b74605553/src/jvm/clojure/lang/Atom.java#L33) чрез `compare-and-set!`.
+
+= Атоми
+== Ограничения
+
+* Атомите имат няколко ограничения, които са решени в STM-а
+* Не можете да координирате промяна на два атома
+* Live-lock: `swap!` няма да се откаже да опитва да промени атома
+* Няма как да сигурно предизвикате страничен ефект
+* Всички тези неща са адресирани от ref и agent
+* Атомите са *прост* начин за поддържане на състояние
+
+= Променливи
+
+* Референтен тип в Clojure, по-особен
+* Ползваме го от началото на курса
+* Променлива се прави с `(var identifier)`, където identifier е името на променливата.
+* `var` е специална форма
+* Може да вземете стойността на променлива с `deref`
+
+= Променливи
+== Пример
+
+:annotate
+  (def answer 42)
+
+  (def answer-var (var answer))
+
+  (class answer-var) ; =>
+  (deref answer-var) ; =>
+  @answer-var        ; =>
+
+= Променливи
+== Несъществуващи имена
+
+Не можете да вземете променлива от несъществуващо име:
+
+:code
+  (def answer 42)
+
+  (var unexisting)
+  ; CompilerExpection Unable to resolve var: unexisting in this context
+
+= Променливи
+== Reader макрос
+
+Променливите имат reader макрос `#'`, т.е. `(var foo)` e `#'foo`
+
+:annotate
+  (def answer 42)
+
+  (deref #'answer) ; =>
+  @#'answer        ; =>
+
+= Именовани пространства
+
+* Повечето променливи са в именовани пространства.
+* `#'user/foo` например е променливата `foo` в именованото пространство `user`.
+* `user` е именованото пространство по подразбиране
+* Символите и ключовите думи също могат да имат именовани простраства: `:foo/bar` и `'foo/bar`
+* Именованите пространства са просто част от името, без специално значение
+* Може да създадете символ/ключова дума с несъществуващо именовано пространство `:unexisting/baba`
+* Това не важи за променливите - всяка променлива трябва да сочи нанякъде.
+* Ще разглеждаме именовани пространства по-натам
+
+= Именовани пространства
+== При ключовите думи
+
+Ключовите думи имат макроси, които автоматично добавят текущото наименовано пространство:
+
+:annotate
+  :word  ; =>
+  ::word ; =>
+
+Очевидно кода от лекциите се изпълнява в `lectures.sandbox`.
+
+= Променливи
+== Резултата от def
+
+Резултата от `def` е променлива:
+
+:annotate
+  (def answer 42)
+  ; =>
+
+  @#'lectures.sandbox/answer
+  ; =>
+
+= Променливите
+== ...които не са точно променливи
+
+Променливите нямат лексикална област на видимост:
+
+:annotate
+  (def x 80)
+
+  (defn never-do-this []
+    (def x 123)
+    (def y 456)
+    (def x (+ x y))
+    x)
+
+  (never-do-this) ; =>
+  x               ; =>
+
+Това важи и за `defn`, който ползва `def`. С изключение на динамичната област на видимост, променливите се използват за *константни* стойности.
+
+= Метаданни
+== meta/with-meta
+
+Към повечето обекти в Clojure могат да се добавят метаданни с `with-meta`.
+
+:annotate
+  (def person {:age 33 :name "Jesus"})
+  (def meta-jesus (with-meta person {:version 1 :source "Slides"}))
+
+  (meta meta-jesus)
+  ; =>
+
+  (= person meta-jesus)          ; =>
+  (identical? person meta-jesus) ; =>
+
+Метаданните не влияят на равенството - два обекта с различни метаданни могат да са еднакви по стойност
+
+= Метаданни
+== Употреба
+
+Употребата на метаданните е много смесена. Може да бъде както служебна, така и потребителска:
+
+* Служебна: type hinting за компилатора
+* Служебна: частни имена в именовани пространства
+* Служебна: динамични променливи
+* Потребителска: източник на данните
+* Потребителска: каквото ви хрумне
+
+= Метаданни
+== Reader макроси
+
+* Метаданните имат и reader макрос
+* `(def answers ^{:with-meta "yup"} [42 43])` поставя метаданни на вектора
+* `(def ^{:with-meta "yup"} answers [42 43])` поставя метаданни на променливата `#'answers`
+
+= Метаданни
+== Reader макроси (2)
+
+:annotate
+  (def ^{:with-meta "yup"} on-var [1 2 3 4])
+  (def on-vec ^{:with-meta "yup"} [1 2 3 4])
+
+  (meta on-var)    ; =>
+  (meta on-vec)    ; =>
+
+  (meta #'on-var)
+  ; =>
+
+  (meta #'on-vec)
+  ; =>
+
+= Метаданни
+== Кратки форми
+
+* Макросите за метаданни имат и кратки форми
+* `^:foo` е като `{:foo true}`
+* `^"baba"` е като `{:tag "baba"}`
+* `^String` е като `{:tag java.lang.String}`
+
+= Метаданни
+== Кратки форми (2)
+
+:annotate
+  (def bool-meta ^:something [1 2 3 4])
+  (def type-meta ^String [1 2 3 4])
+  (def str-meta ^"hmm" [1 2 3 4])
+
+  (meta bool-meta) ; =>
+  (meta type-meta) ; =>
+  (meta str-meta)  ; =>
+
+= Метаданни
+== Криптичен слайд
+
+Сега нещо объркващо:
+
+* В `(def ^:something foo 42)`, метаданните не отиват на променливата `#'foo`, а на символа `'foo`
+* `def` копира метаданните от символа към променливата
+* Символите могат да имат метаданни, което е причината да не се интернират
+* Разбрахте ли?
+
+= Динамични променливи
+
+* Clojure позволява dynamic scoping на променливите
+* Променливите трябва да имат метаданни `{:dynamic true}`
+* По конвенция се изписват с `*` отпред и отзад - `*in*` и `*math-context*`
+* Последните традиционно се наричат "earmuffs"
+* На български: "ушанки" или "наушници"
+
+= Динамични променливи
+== binding
+
+`binding` може да промена стойностите на динамичните променливи в рамките на един блок:
+
+:annotate
+  (def ^:dynamic *value* 42)
+
+  (defn get-value [] *value*)
+
+  (get-value)             ; =>
+
+  (binding [*value* :foo]
+    (get-value)           ; =>
+    nil)
+
+  (get-value)             ; =>
+
+= Динамични променливи
+== binding и влагане
+
+`binding` пази стойностите в нещо като стек.
+
+:annotate
+  (def ^:dynamic *value* 42)
+
+  (defn get-value [] *value*)
+
+  (binding [*value* :foo]
+    (get-value)             ; =>
+    (binding [*value* :bar]
+      (get-value)           ; =>
+      nil)
+    (get-value)             ; =>
+    nil)
+
+  (get-value)               ; =>
+
+= Динамични променливи
+== Вградени
+
+Clojure има няколко интересни вградени динамични променливи. Нека ги разгледаме.
+
+= `*out*`
+
+`*out*` е стандартния изход. Можем да го предефинираме с `binding`.
+
+:annotate
+  (def buffer (java.io.StringWriter.))
+
+  (binding [*out* buffer]
+    (prn [1 2 3 4]))
+
+  (str buffer) ; =>
+
+По този начин вместо да принтираме в стандартния изход, можем да вземем резултатите от `prn` в низ.
+
+= `*math-context*`
+
+= `*out*`
+== with-out-str
+
+`*out*` е стандартния изход. Можем да го предефинираме с `binding`.
+
+:annotate
+  (def buffer (java.io.StringWriter.))
+
+  (binding [*out* buffer]
+    (prn [1 2 3 4]))
+
+  (str buffer) ; =>
+
+По този начин вместо да принтираме в стандартния изход, можем да вземем резултатите от `prn` в низ.
+
+= BigDecimal деление
+
+Помните ли проблемите с делението при Big Decimal?
+
+:annotate
+  (/ 1M 3)
+  ; =>
+
+В Java има `MathContext`, който тенденциозно се ползва при всяко деление:
+
+{{{
+<pre>
+new BigDecimal("1").divide(new BigDecimal("3"),
+                           new MathContext(2))
+</pre>
+}}}
+
+= BigDecimal деление
+== `*math-context*`
+
+В Clojure може да ползвате `*math-context*`:
+
+:annotate
+  (/ 1M 3)
+  ; =>
+
+  (binding [*math-context* (java.math.MathContext. 2)]
+    (/ 1M 3) ; =>
+    nil)
+
+  (binding [*math-context* (java.math.MathContext. 5)]
+    (/ 1M 3) ; =>
+    nil)
+
+= with-out-str и with-precision
+
+За последните две неща има и макроси:
+
+:annotate
+  (def output (with-out-str (pr [1 2 3 4])))
+
+  output ; =>
+
+  (with-precision 3
+    (/ 1M 3) ; =>
+    nil)
+
+Нали, за да не пипаме Java класове.
+
+= Динамични променливи
+== set!
+
+Може да ползвате `set!` да променяте стойности на динамични променливи:
+
+:annotate
+  (def ^:dynamic *answer* :unknown)
+
+  (binding [*answer* 42]
+    *answer*            ; =>
+    (set! *answer* 100)
+    *answer*            ; =>
+    nil)
+
+  *answer*              ; =>
+
+= Динамични променливи
+== set! (2)
+
+`set!` работи за последната променлива от стека:
+
+:annotate
+  (def ^:dynamic *answer* :unknown)
+
+  (binding [*answer* 42]
+    (binding [*answer* :foo]
+      (set! *answer* 100)
+      *answer*          ; =>
+      nil)
+
+    *answer*            ; =>
+    nil)
+
+  *answer*              ; =>
+
+= Динамични променливи
+== set! (3)
+
+`set!` не работи за нединамични променливи
+
+:annotate
+  (def answer :unknown)
+
+  (set! answer 42)
+  ; =>
+
+Това не е Scheme.
+
+= Динамични променливи
+== Връщане на стойност
+
+* Засега динамичните промеливи изглеждат като начин да подаваме опционални аргументи
+* Може да ги ползваме и за връщане на опционални стойности
+* Например, нека имплементираме `abs`, която опционално казва дали се е наложило да смени знака
+* Ще слага булева стойност на `*negative-arg*` чрез `set!`
+
+= Динамични променливи
+== Връщане на стойност
+
+:annotate
+  (def ^:dynamic *negative-arg*)
+
+  (defn abs [n]
+    (if (neg? n)
+      (do (set! *negative-arg* true)
+          (- n))
+      (do (set! *negative-arg* false)
+          n)))
+
+  (binding [*negative-arg* nil]
+    (abs -42)      ; =>
+    *negative-arg* ; =>
+    nil)
+
+* Уви, имаме проблем
+* Ако `*negative-arg*` няма стойност с `binding`, `set!` хвърля грешка
+
+= thread-bound?
+
+Може да ползвате `thread-bound?` за да проверите дали променливата има стойност с `binding`.
+
+:annotate
+  (def ^:dynamic *answer*)
+
+  (thread-bound? #'*answer*)   ; =>
+
+  (binding [*answer* 42]
+    (thread-bound? #'*answer*) ; =>
+    nil)
+
+= Динамични променливи
+== И различни нишки
+
++ Както си личи от името (`thread-bound?`), `binding` е thread-local
++ За щастие, вградените форми в Clojure вземат това предвид
+
+:annotate
+  (def future-answer
+    (with-precision 2
+      (future (/ 1M 3))))
+
+  @future-answer ; =>
+
+= Динамични променливи
+== Проблеми
+
+Все пак, има някои проблеми:
+
+:annotate
+  (def broken
+    (with-precision 2
+      (map #(/ 1M %) (range 1 10))))
+
+  (pr-str broken)
+  ; =>
+
+  (def working
+    (with-precision 2
+      (mapv #(/ 1M %) (range 1 10))))
+
+  (pr-str working)
+  ; =>
+
+= Динамични променливи
+== Проблеми (2)
+
+* Това се случва, защото `map` е мързелив.
+* Когато анонимната функция тръгне да се оценява, `*math-context*` е загубила стойността си
+* `mapv` няма този проблеми, защото не е мързелив и се се оценява преди да се излезе от `with-precision`
+* Конкретно този проблем може да се реши с `bound-fn`
+
+= Динамични променливи
+== bound-fn
+
+`bound-fn` е като `fn`, но запазва thread-local промевливите от когато е извикана.
+
+:annotate
+  (def fixed
+    (with-precision 2
+      (map (bound-fn [n] (/ 1M n)) (range 1 10))))
+
+  fixed
+  ; =>
