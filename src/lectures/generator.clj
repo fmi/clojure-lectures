@@ -40,11 +40,11 @@
 
 (defmethod generate :block-code [[_ _ code]]
   (gather-docs code)
-  [:pre {:class "brush: clojure"} code])
+  [:pre {:class "brush: clojure"} (h code)])
 
 (defmethod generate :block-annotate [[_ _ code]]
   (gather-docs code)
-  [:pre {:class "brush: clojure"} (annotate code)])
+  [:pre {:class "brush: clojure"} (-> code annotate h)])
 
 (defmethod generate :bullet-list [[_ & items]]
   `[:ul ~@(map generate items)])

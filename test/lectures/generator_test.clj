@@ -17,7 +17,9 @@
        [:paragraph "Foo" [:bold "Bar"]] [:p "Foo" [:strong "Bar"]]
 
        [:block :code "(clojure code)"]     [:pre {:class "brush: clojure"} "(clojure code)"]
+       [:block :code "<html>"]             [:pre {:class "brush: clojure"} "&lt;html&gt;"]
        [:block :annotate "(+ 1 2) ; =>"]   [:pre {:class "brush: clojure"} "(+ 1 2) ; 3"]
+       [:block :annotate "; <html>"]       [:pre {:class "brush: clojure"} "; &lt;html&gt;"]
 
        [:bullet-list [:incremental "Foo"] [:incremental "Bar"]]
        [:ul [:li {:class "action"} "Foo"] [:li {:class "action"} "Bar"]]
