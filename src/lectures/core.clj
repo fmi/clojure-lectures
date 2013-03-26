@@ -3,5 +3,9 @@
   (gen-class :main true))
 
 (defn -main
-  ([] (recompile-all))
-  ([lecture] (recompile lecture)))
+  ([]
+   (recompile-all)
+   (shutdown-agents))
+  ([lecture]
+   (recompile lecture)
+   (shutdown-agents)))
