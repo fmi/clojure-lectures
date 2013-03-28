@@ -1,0 +1,386 @@
+= Днес
+
+* Малко преговор
+* Refs
+* Agents
+
+= Предизвикателвсто #2
+== Малко изводи
+
+* Предпочитайте `defn` пред `def`
+* Ползвайте валидатор, вместо да хвърляте изключение
+* Не прекалявайте с `DRY`-а
+* Не сбивайте всичко на един ред
+* Има ново предизвикателство
+
+= Атоми
+
+* Създават се с `(atom initial-val)`
+* Стойност се взема с `(deref a)` или `@a`
+* Обновяване с `(swap! atom modifier-fn)`
+* Например `(swap! counter + 1)`
+* `(reset! atom val)`
+* `(compare-and-set! atom old-val new-val)`
+* Проблеми: livelock и некоординираност
+
+= Променливи
+
+* `def` създава нова променлива и й дава има в текущия namespace
+* Променливата е просто "контейнер" за някаква стойност
+* `(def foo 42)` създава нова променлива с име `foo` в текущото пространство
+* `(var foo)` връща тази променлива (a.k.a. "контейнер"). `#'foo` също
+* `(identical? #'foo #'foo)` връща `true`
+* С `deref` може да видим текущата стойност на променливата
+* Въпреки името им, променливите се ползват за константни стойностти
+* Промяната им е ОК само при метапрограмиране или при "жива" среда на работа
+* Променливите могат да имат динамична област на видимост
+
+= Метаданни
+
+* Почти всеки обект в Clojure може да има метаданни
+* Метаданните са прост мап
+* Някои ключове имат специална стойност за компилатора (`:private`, `:dynamic`)
+* Можете да ги ползвате за каквото искате (например taint, подобно на Ruby или Perl)
+* Има reader синтаксис: `^{:private true} [1 2 3]` или `(def ^:dynamic baba)`
+
+= Ref
+== Някои факти
+
+* Референтен тип, много сходен на атом
+* Част от software transactional memory
+* Решава/избягва livelocking проблемите
+* Няколко могат да бъдат координирани
+
+= Ref
+== Интерфейс
+
+* Създава се с `(ref initial-value)`
+* Текуща стойност с `deref`
+* Всякаква промяна става в транзакция, която се прави с `dosync`
+* Има няколко варианта за промяна
+* Най-честия е `alter`, който е като `swap!` за атоми
+* `ref-set` е аналогичен на `reset!`
+
+= Ref
+== Употреба като атом
+
+:annotate
+  (defn make-account []
+    (ref 0 :validator integer?))
+
+  (defn balance [account]
+    @account)
+
+  (defn deposit [account amount]
+    (dosync
+      (alter account + amount))
+    account)
+
+  (def money (make-account))
+  (deposit money 100)
+  (deposit money 50)
+  (balance money) ; =>
+
+= Ref
+== По-сложен пример
+
+* Ще направим нещо като игра
+* Ще имаме персонажи с инвентар
+* Да кажем Билбо, Гандалф и Смог
+* Персонажите ще могат да се разграбват един друг
+* След като Билбо и Гандалф убият Смог (spoiler alert!) искат да му разграбят инвентара
+
+= Нещо като игра
+== Помощни функции
+
+`(dofutures n f1 f2 ..)` пуска функциите `f1`, `f2` и т.н. в отделни `future`-и. За всяка функция пуска по `n` `future`-а. Изчаква изпълнението на всички.
+
+:annotate
+  (defn wait-futures [& futures]
+    (doseq [f futures]
+      @f))
+
+  (defn dofutures [n & funcs]
+    (let [futures (doall (for [_ (range n)
+                               func funcs]
+                           (future (func))))]
+      (apply wait-futures futures)))
+
+:code
+  (dofutures 5
+             #(prn "First")
+             #(prn "Second"))
+
+= Нещо като игра
+== Персонажите
+
+:annotate
+  (defn character
+    "Creates a character."
+    [name & {:as opts}]
+    (ref (merge {:name name :items #{} :health 100}
+                opts)))
+
+  (character "Bilbo")
+  (character "Gandalf" :mana 40)
+  (character "Smaug" :items #{:sword :gold})
+
+* Това с `opts` е популярен pattern. Например `(ref 0 :validator integer?)`.
+
+= Нещо като игра
+== Билбо, Гандалф и Смог
+
+Това са нашите герои (и злодей):
+
+:code
+  (def bilbo (character "Bilbo" :health 100 :strength 100))
+  (def gandalf (character "Gandalf" :health 75 :mana 750))
+  (def smaug (character "Smaug" :health 500 :strength 400 :items (set (range 50))))
+
+= Нещо като игра
+== Грабеж
+
+* Билбо и Гандалф работят в отделни нишки
+* Докато Смог има предмети
+* Всеки от тях взема по един предмет от неговия инвентар и го прибира в своя
+* На края Билбо и Гандалф трбява да са си разпределили предметите по някакъв начин
+* Не трябва да има повторения
+* Трябва да са всички предмети
+* Различни изпълнения ще ги разпределят различно
+
+= Нещо като игра
+== Грабежът
+
+Гандалф и Билбо конкурентно ще грабят Смог:
+
+:code
+  (defn loot [from to]
+    (dosync
+      (when-let [item (first (:items @from))]
+        (alter to update-in [:items] conj item)
+        (alter from update-in [:items] disj item))))
+
+  (dofutures 1
+             #(while (loot smaug bilbo))
+             #(while (loot smaug gandalf)))
+
+Тази версия работи коректно.
+
+= Ref
+== Семантика
+
+* `deref` никога не блокира
+* Промяната на стойност става само в транзакция, с `dosync`
+* Във всяка транзакция се вижда изолиран snapshot на ref-овете
+* Конкурентно изпълняващи/изпълнили се промени няма да бъдат видяни
+* Ако на края на транзакцията всичките `alter`-нати `ref`-ове са недокоснати, транзакцията минава атомично
+* В противен случай транзакцията се retry-ва
+
+= Нещо като игра
+== Грешен грабеж
+
+Този грабеж е неконсистентен. В резултат, Билбо и Гандалф имат по едно копие на някои предмети.
+
+:code
+  (defn loot [from to]
+    (when-let [item (first (:items @from))]
+      (dosync
+        (alter to update-in [:items] conj item)
+        (alter from update-in [:items] disj item))))
+
+  (dofutures 1
+             #(while (loot smaug bilbo))
+             #(while (loot smaug gandalf)))
+
+= Software Transactional Memory
+== Малко факти
+
+* Функциите, променящи ref-а, трябва да са без странични ефекти
+* Могат и ще се изпълняват по няколко пъти
+* Livelocking: една транзакция не може да приключи, понеже други я карат постоянно да retry-ва
+* Barging: ако една транзакция се retry-не твърде много пъти, Clojure й дава по-висок приоритет
+* Retry limit: ако една траназкия достигне лимит на retry-ове, Clojure хвърля изключение
+* Последното е далеч по-добре от това транзакцията просто да забие
+
+= Retry limit
+
+Ето така може да се опитате да предизвикате livelock:
+
+:code
+  (def x (ref 0))
+
+  (dosync
+    @(future (dosync (ref-set x 0)))
+    (ref-set x 1))
+
+= commute
+== Другия начин
+
+* Освен с `alter`, `ref`-овете могат да се променят с `commute`
+* `commute` се ползва само за комутативни промени
+* Когато две нишки направят две `commute` промени на един `ref`, не се налага retry
+* Функцията се изпълнява два пъти - веднъж в транзакцията и веднъж накрая
+* Първия път е за да се получи някаква стойност в транзакцията
+* Втория е да се промени актуалната стойност накрая
+* Има шанс двете да са различни
+* Ако ползвате `commute` за некомутативна промяна, имате проблем
+
+= commute
+== loot
+
+Ето така ще работи, понеже `conj` е комутативно:
+
+:code
+  (defn loot-with-commute [from to]
+    (dosync
+      (when-let [item (first (:items @from))]
+        (commute to update-in [:items] conj item)
+        (alter from update-in [:items] disj item))))
+
+= commute
+== Грешен loot
+
+Така няма, понеже `disj` не е
+
+:code
+  (defn loot-with-commute [from to]
+    (dosync
+      (when-let [item (first (:items @from))]
+        (commute to update-in [:items] conj item)
+        (commute from update-in [:items] disj item))))
+
+= commute
+== Скорост
+
+Понеже при `commute` има по-малко retry-ове, кодът е по-конкурентен.
+
+:code
+  (def x (ref 0))
+
+  (dofutures 5
+             (fn []
+               (dotimes [_ 1000]
+                 (dosync (modifier x + (apply + (range 1000))))))
+             (fn []
+               (dotimes [_ 1000]
+                 (dosync (modifier x - (apply + (range 1000)))))))
+
++ Ако `modifier` е `alter`, минава за 1119.33 msec
++ Ако `modifier` е `commute`, минава за 300.534 msec
++ Пробвайте примера в [gh:fmi/clojure-examples]
+
+= Ref
+== За следващия път
+
+Остават още няколко теми за следващия път:
+
+* write skew и `ensure`
+* `min-history` и `max-history`
+* `add-watch`
+
+= Agent
+== Някои факти
+
+* Референтен тип
+* Създава се с `(agent initial-val)`
+* Променя се с `(send agent func)`, където `func` изчислява новата стойност на агента
+* Асинхронен - `send` връща веднага, `func` се изпълнява по-късно в друга нишка
+* Агента трупа съобщенията на опашка и ги изпълнява в реда, в който ги е получил
+* В нито един момент не се изпълнява повече от едно съобщение на агент
+
+= Agent
+== Идея за logger
+
+Ще реализираме агент, с който ще правим логване:
+
+* Агента ще пази броя съобщения, започващи от 1
+* Всяко съобщение е от вида `[<msg-id>] <worker>: <message>`
+* `[24] test-runner: Just finished running challenge 02`
+* На агента ще изпращаме функция която принтира съобщението и инкрементира стойността
+
+= Agent
+== Реализация на logger
+
+:code
+  (def logger (agent 1))
+
+  (defn log [from message]
+    (send logger (fn [msg-id]
+                   (printf "[%02d] %s: %s\n" msg-id from message)
+                   (inc msg-id))))
+
+  (log :test-runner "Just finished running challenge 02")
+  (log :test-runner "Started on challenge 03")
+
+= Agent
+== send с повече аргументи
+
+`send` приема допълнителни аргументи, които подава на функцията:
+
+:code
+  (def logger (agent 1))
+
+  (defn log [msg-id from message]
+    (printf "[%02d] %s: %s\n" msg-id from message)
+    (inc msg-id))
+
+  (send logger log :test-runner "Just finished running challenge 02")
+  (send logger log :test-runner "Started on challenge 03")
+
+= Agent
+== await
+
+* Може да ползвате `(await agent)` за да изчакате агент да обработи всичките си съобщения
+* Това е синхронна операция, т.е., блокира
+* `await-for` е същото, но има опция за timeout
+* За сравнение, `deref` никога не блокира за агент
+
+= Agent
+== Грешки
+
+* Функцията, подадена на агента може да хвърли изключение
+* При atom и ref това не е проблем, понеже тогава изключението ще излезе от `swap!`/`alter`
+* Понеже агента е асинхронен, изключението няма да се обработи от кода, извикващ `send`
+* Всяко следващо извикване на `send` ще поражда същото изключение
+* Може да проверите грешката да агента с `(agent-error a)`
+* Можете да рестартирате агента: `(restart-agent a value)`
+* Има и `(restart-agent a value :clear-actions true)`, който премахва чакащите съобщения
+* Вижте примера в [gh:fmi/clojure-examples] за детайли
+
+= Agent
+== send и send-off
+
+* Всъщност, има два начина да пращате съобщения на агенти
+* `send` и `send-off`
+* Между тях има важна разлика, но преди това трябва да си говорим за thread pool-ове
+
+= Thread pool
+
+Това е важна концепция:
+
+* Пускат се X (напр. десет) нишки и се пазят някъде, в нещо, наречено pool
+* Всеки път, когато искаме да пуснем нещо в отделна нишка, вместо да пускаме нова, вземаме една от pool-а
+* Когато изпълнението приключи, нишката се връща в pool-а
+* Pool-а има таван, който опционално може да се разраства при нужда
+* Това елиминира времето за пускане на нишка
+* Този подход е приложим за ред други неща: връзки към бази от данни, Apache процеси, fastcgi, т.н.
+
+= Agent
+== Thread pool-ове
+
+* Действията на агентите в Clojure се изпълняват в два thread pool-а
+* Единия за неща изпратени със `send` и един с неща, изпратени със `send-off`
+* `send` има лимит от 2 + брой-процесори, докато `send-off` няма. Защо?
+* `send` е подходящо за CPU-bound операции
+* `send-off` е подходящо за IO-bound операции
+* В [gh:fmi/clojure-examples] има пример за разликата в изпълнение
+* `Future`-ите се пускат в `send-off` thread pool и затова трябва да викаме `(shutdown-agents)`
+
+= Agent
+== Software transactional memory
+
+* Може да изпращате съобщения на агенти в `dosync`
+* Те не отиват в опашката на агента, преди транзакцията да приключи
+* Отиват само ако транзакцията е успешна
+* По този начин може да правите странични ефекти от транзакции
+* Отново, пример в [gh:fmi/clojure-examples]
