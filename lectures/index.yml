@@ -38,4 +38,7 @@
   title: 09. Решение на втора задача
   date: 2013-04-04
   slug: 09-task-02-solution
-
+'10':
+  title: 10. Още малко конкурентност и defrecord
+  date: 2013-04-11
+  slug: 10-more-concurrency-defrecord
