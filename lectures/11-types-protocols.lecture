@@ -305,8 +305,8 @@
 
 = По-сложни типове
 
-  * `(scaffold clojure.lang.IPersistentSet)`
-  * `(scaffold clojure.lang.IPersistentMap)`
-  * Трябва да дефинираме доста неща :-)
-  * Трябва да ползваме `deftype`, защото класът от `defrecord` имплементира доста от интерфейсите
+* `(scaffold clojure.lang.IPersistentSet)`
+* `(scaffold clojure.lang.IPersistentMap)`
+* Трябва да дефинираме доста неща :-)
+* Трябва да ползваме `deftype`, защото класът от `defrecord` имплементира доста от интерфейсите
 
