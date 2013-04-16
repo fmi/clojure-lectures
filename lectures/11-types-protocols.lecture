@@ -163,8 +163,18 @@
 
 = Записите не са част от namespace-a
 
-* TBD
-* Протоколите са
+:code
+  (ns example)
+  (defn f [] "baba")
+  (defrecord R [x])
+
+  (ns other)
+  (example/f)   ; "baba"
+  example/R   ; java.lang.RuntimeException: No such var: example/R
+
+  (import example.R)
+  example.R
+
 
 = Може да имплементират интерфейси
 
