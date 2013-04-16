@@ -1,0 +1,52 @@
+= Днес
+
+* протоколи
+* записи и типове
+* имплементиране на протоколи
+* имплементиране на clojure-ските абстракции
+
+= Да си припомним defrecord набързо
+
+= Протокол за матрици
+
+= `defprotocol` в подробности
+
+* Type dispatch
+
+= `extend-protocol`
+
+* Няма нужда да имплементираме всичко:
+
+= `extend-type`
+
+* Няколко протокола
+
+= Expression problem, monkey-patching
+
+= Разни
+
+* `extend` + `merge`
+
+= Още записи
+
+* Конструктори
+* Няма mutable fields
+* Други неща, които не сме казали предния път
+
+= `deftype`
+
+* Low-level
+* Само с `(.x point)`
+* Няма value семантика
+* Mutable fields
+
+= Функции още в типа
+
+* Inline implementation
+* Бързо
+* Само функции от протоколи
+* Java interface vs. dispatch in clojure
+
+= `(conj my-object)`
+
+
