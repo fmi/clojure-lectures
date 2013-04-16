@@ -80,6 +80,19 @@
 * Може да ползваме който си искаме вграден или наш тип.
 * Няма нужда да имплементираме всичко. Clojure ще хвърли exception.
 
+= Имплементация в `nil`
+
+:code
+  (extend-protocol Matrix
+    nil
+    (lookup [x i j])
+    (update [x i j value])
+    (rows [x] [])
+    (cols [x] [])
+    (dims [x] [0 0]))
+
+* Понякога искаме функциите ни да работят смислено и върху `nil`
+
 = Пример
 
 :code
@@ -101,6 +114,11 @@
 
   (cols m-baba)
   ; ([nil nil nil] [:baba nil nil] [nil nil nil] [nil nil nil])
+
+  (lookup nil 100 100)
+  ;= nil
+  (dims nil)
+  ;= [0 0]
 
 = `extend-type`
 
