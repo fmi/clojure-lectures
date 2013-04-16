@@ -49,7 +49,7 @@
     …
   }
   …
-  List sort(List l);
+  IntList sort(IntList l);
 </pre>
 }}}
 
@@ -137,6 +137,52 @@
 * `extend` приема речник от функции и е по-мощен от `extend-protocol` и `extend-type`.
 * Позволява ни да преизползваме функции в две имплементации.
 
+= extend
+== Пример
+
+Искаме `clojure.lang.IPersistentMap` да имплементира `Matrix`:
+
+:code
+  (extend-protocol clojure.lang.IPersistentMap
+    Matrix
+    (lookup [this i j] (get-in this [i j]))
+    (update [this i j value] (assoc-in this [i j] value))
+    (rows [this]
+      (let [[w h] (dims this)]
+        (for [i (range w)]
+          (for [j (range h)]
+            (get-in this [i j])))))
+    (cols [this]
+      (let [[w h] (dims this)]
+        (for [j (range h)]
+          (for [i (range w)]
+            (get-in this [i j])))))
+    (dims [this]
+      [(inc (apply max (keys this)))
+       (inc (apply max (map #(inc (apply max (vals %)))
+                            (vals this))))]))
+= extend
+== Пример
+
+Може да използваме `extend` така:
+
+:code
+  (def assoc-matrix-impl
+    {:lookup (fn [this i j] (get-in this [i j]))
+     :update (fn [this i j value] (assoc-in this [i j] value)) })
+
+  (extend clojure.lang.IPersistentVector
+    Matrix
+    (merge assoc-matrix-impl
+      {:rows (fn [this] (seq this))
+       :cols (fn [this] (apply map vector this))
+       :dims (fn [this] [(count this) (count (first this))]) }))
+
+  (extend clojure.lang.IPersistentMap
+    Matrix
+    (merge assoc-matrix-impl
+      {...}))
+
 = Да си припомним `defrecord`
 == Код
 
@@ -170,7 +216,7 @@
 
   (ns other)
   (example/f)   ; "baba"
-  example/R   ; java.lang.RuntimeException: No such var: example/R
+  example/R     ; java.lang.RuntimeException: No such var: example/R
 
   (import example.R)
   example.R
@@ -209,7 +255,6 @@
 * Можем да ползваме полетата директно в имплементациите, няма нужда от `(:x this)`
 * По-бързо, защото класът имплементира интерфейса на ниво Java
 * Не толкова гъвкаво, защото записите по подразбиране имплементират някои интерфейси и няма да можем да дефинираме функции със същите имена
-* Не можем да ползваме името на класа
 
 = reify
 == Обект от анонимент тип, който имплементира интерфейс
@@ -226,7 +271,7 @@
 * `(extenders protocol)` – връща типовете, които имплементират даден протокол
 * `(extends? protocol type)` – дали протокол е бил имплементиран в тип
 * `(satisfies? protocol instance)` – дали протокол е бил имплементиран в даден обект
-* `(instance? class instance)` – дали обект е инстанция на даден Java клас или протокол
+* `(instance? class instance)` – дали обект е инстанция на даден Java клас
 
 = Какво се случва при съвпадения
 
@@ -292,7 +337,7 @@
 
 = Прост пример: обект, който брои двойно
 
-:code
+:annotate
 
   (deftype DoubleCounter [coll]
     clojure.lang.Counted
@@ -301,7 +346,7 @@
                             (recur (rest xs) (inc l))
                             l)))))
 
-  (count (DoubleCount. [1 2 3])) ; =>
+  (count (DoubleCounter. [1 2 3])) ; =>
 
 = По-сложни типове
 
