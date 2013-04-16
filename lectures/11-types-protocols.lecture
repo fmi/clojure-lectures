@@ -132,6 +132,11 @@
 * Като `extend-protocol`, но можем да имплементираме няколко протокола върху един тип
 * И `extend-type` и `extend-protocol` са макроси върху `extend`
 
+= extend
+
+* `extend` приема речник от функции и е по-мощен от `extend-protocol` и `extend-type`.
+* Позволява ни да преизползваме функции в две имплементации.
+
 = Да си припомним `defrecord`
 == Код
 
@@ -196,6 +201,9 @@
 * Не толкова гъвкаво, защото записите по подразбиране имплементират някои интерфейси и няма да можем да дефинираме функции със същите имена
 * Не можем да ползваме името на класа
 
+= reify
+== По малко от двата свята
+
 = Няколко помощни функции
 
 * `(extenders protocol)` – връща типовете, които имплементират даден протокол
@@ -211,13 +219,32 @@
 * два типа от една и съща йерархия, печели имплементацията на най-специфичния (най-младшия)
 * два независими типа, печели случайна имплементация
 
-= Използване на вградените функции за наши типове
-
-* TBD
-
 = `deftype`
 
 * Low-level
 * Само с `(.x point)`
 * Няма value семантика
 * Mutable fields
+
+= `deftype`
+== Пример
+
+:annotate
+  (deftype SchrödingerCat [^:unsynchronized-mutable state]
+   clojure.lang.IDeref
+   (deref [sc]
+    (locking sc
+     (or state
+      (set! state (if (zero? (rand-int 2))
+                   :dead
+                   :alive))))))
+
+  (defn schrödinger-cat
+   "Creates a new Schrödinger's cat. Beware, the REPL may kill it!"
+   []
+   (SchrödingerCat. nil))
+
+  (def felix (schrödinger-cat))
+  @felix                          ; =>
+  (schrödinger-cat)               ; =>
+  (schrödinger-cat)               ; =>
