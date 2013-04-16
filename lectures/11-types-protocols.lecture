@@ -265,3 +265,48 @@
   @felix                          ; =>
   (schrödinger-cat)               ; =>
   (schrödinger-cat)               ; =>
+
+= Имплементация на абстракциите в Clojure
+
+* „Просто“ имплементираме правилния интерфейс
+* Още не са направени на протоколи
+* [http://clojureatlas.com/](http://clojureatlas.com/)
+* Или `scaffold`
+
+= scaffold
+
+:code
+
+  (defn scaffold
+   "Given an interface, returns a 'hollow' body suitable for use with `deftype`." [interface]
+   (doseq [[iface methods] (->> interface
+                            .getMethods
+                            (map #(vector (.getName (.getDeclaringClass %))
+                                   (symbol (.getName %))
+                                   (count (.getParameterTypes %)))) (group-by first))]
+    (println (str " " iface))
+    (doseq [[_ name argcount] methods]
+     (println
+      (str " "
+       (list name (into '[this] (take argcount (repeatedly gensym)))))))))
+
+= Прост пример: обект, който брои двойно
+
+:code
+
+  (deftype DoubleCounter [coll]
+    clojure.lang.Counted
+    (count [this] (* 2 (loop [xs (.coll this) l 0]
+                          (if (seq xs)
+                            (recur (rest xs) (inc l))
+                            l)))))
+
+  (count (DoubleCount. [1 2 3])) ; =>
+
+= По-сложни типове
+
+  * `(scaffold clojure.lang.IPersistentSet)`
+  * `(scaffold clojure.lang.IPersistentMap)`
+  * Трябва да дефинираме доста неща :-)
+  * Трябва да ползваме `deftype`, защото класът от `defrecord` имплементира доста от интерфейсите
+
