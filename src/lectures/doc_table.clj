@@ -19,9 +19,11 @@
   "Retrieves the documentation of a symbol. Returns nil if it
    cannot be found. Uses the doc macro."
   [sym]
-  (let [doc-str (with-out-str (eval (list 'clojure.repl/doc sym)))]
-    (when (not= doc-str "")
-      (str/replace doc-str #"^-+\n" ""))))
+  (try
+    (let [doc-str (with-out-str (eval (list 'clojure.repl/doc sym)))]
+      (when (not= doc-str "")
+        (str/replace doc-str #"^-+\n" "")))
+    (catch RuntimeException e nil)))
 
 (defn- add-to-table
   [thing]
