@@ -25,6 +25,12 @@
     (with-doc-table
       (gather-docs "(inc")
       (is (= {} (get-doc-table)))))
+  (testing "Does not break with classes that do not exist"
+    (with-doc-table
+      (gather-docs "example.R")
+      (is (= {} (get-doc-table)))))
   (testing "Works when no doc-table set"
     (is (not (thread-bound? #'*doc-table*)))
     (gather-docs "(inc 1)")))
+
+(run-tests)

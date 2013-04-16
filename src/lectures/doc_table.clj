@@ -23,7 +23,8 @@
     (let [doc-str (with-out-str (eval (list 'clojure.repl/doc sym)))]
       (when (not= doc-str "")
         (str/replace doc-str #"^-+\n" "")))
-    (catch RuntimeException e nil)))
+    (catch RuntimeException e nil)
+    (catch ClassNotFoundException e nil)))
 
 (defn- add-to-table
   [thing]
