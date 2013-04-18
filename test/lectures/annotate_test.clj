@@ -32,4 +32,8 @@
        "(map inc [1 2 3])
         ; =>"
        "(map inc [1 2 3])
-        ; (2 3 4)"))
+        ; (2 3 4)"
+
+       ; Namespaces
+       "(in-ns 'foo)"
+       "(in-ns 'foo)"))

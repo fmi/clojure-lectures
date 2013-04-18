@@ -15,7 +15,7 @@
   [code]
   (let [code (-> (str "(do\n" code "\n)")
                  (str/replace #"\n(; \{(\d+)\})$" "$1")
-                 (str/replace #"(?m)^(.*)\s*; \{(\d+)\}$" "(store-result $2 $1)"))]
+                 (str/replace #"(?m)^(.*)\s*; \{(\d+)\}$" "(lectures.sandbox/store-result $2 $1)"))]
     (binding [*ns* (create-ns 'lectures.sandbox)]
       (eval '(do
                (ns lectures.sandbox)
@@ -23,15 +23,15 @@
                (defmacro store-result [number & body]
                  `(try
                     (let [value# (do ~@body)]
-                      (swap! ~'placeholder-values assoc ~number value#)
+                      (swap! ~'lectures.sandbox/placeholder-values assoc ~number value#)
                       value#)
                     (catch Throwable e#
-                      (swap! ~'placeholder-values assoc ~number e#)
+                      (swap! ~'lectures.sandbox/placeholder-values assoc ~number e#)
                       nil)))))
-      (eval (read-string code))
-      (let [result (eval '@placeholder-values)]
-        (remove-ns 'lectures.sandbox)
-        result))))
+      (eval (read-string code)))
+    (let [result (eval '@lectures.sandbox/placeholder-values)]
+      (remove-ns 'lectures.sandbox)
+      result)))
 
 (defn- placeholder->str
   [value]
