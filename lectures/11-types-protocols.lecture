@@ -142,7 +142,7 @@
 Искаме `clojure.lang.IPersistentMap` да имплементира `Matrix`:
 
 :code
-  (extend-protocol clojure.lang.IPersistentMap
+  (extend-type clojure.lang.IPersistentMap
     Matrix
     (lookup [this i j] (get-in this [i j]))
     (update [this i j value] (assoc-in this [i j] value))
@@ -291,7 +291,7 @@
 == Пример
 
 :annotate
-  (deftype SchrödingerCat [^:unsynchronized-mutable state]
+  (deftype SchrödingerCat [^:unsynchronized-mutable state]
    clojure.lang.IDeref
    (deref [sc]
     (locking sc
@@ -300,15 +300,15 @@
                    :dead
                    :alive))))))
 
-  (defn schrödinger-cat
-   "Creates a new Schrödinger's cat. Beware, the REPL may kill it!"
+  (defn schrödinger-cat
+   "Creates a new Schrödinger's cat. Beware, the REPL may kill it!"
    []
-   (SchrödingerCat. nil))
+   (SchrödingerCat. nil))
 
-  (def felix (schrödinger-cat))
+  (def felix (schrödinger-cat))
   @felix                          ; =>
-  (schrödinger-cat)               ; =>
-  (schrödinger-cat)               ; =>
+  (schrödinger-cat)               ; =>
+  (schrödinger-cat)               ; =>
 
 = Имплементация на абстракциите в Clojure
 
