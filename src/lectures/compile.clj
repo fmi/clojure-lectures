@@ -46,6 +46,16 @@
   (fs/copy-dir "resources/js"       target-dir)
   (fs/copy     "lectures/index.yml" (target-file-name "index.yml")))
 
+(defn compiled
+  "Compiles a single lecture and returns the generated HTML"
+  [number]
+  (let [index (read-lectures-index)
+        lecture-key (-> number str keyword)
+        {:keys [title date lecture-ast slug]} (lecture-key index)
+        source-file (str "lectures/" slug ".lecture")
+        lecture-ast (-> source-file slurp parse)]
+    (generate-lecture title date lecture-ast)))
+
 (defn recompile
   "Recompiles a single lecture."
   [number]
