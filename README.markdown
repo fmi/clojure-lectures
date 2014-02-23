@@ -1,6 +1,6 @@
 # Clojure FMI Lectures
 
-The lectures for the [Clojure fourse in FMI Sofia](http://fmi.clojure.bg/).
+The lectures for the [Clojure course in FMI Sofia](http://fmi.clojure.bg/).
 
 This repository contains both the code needed to generate the lectures as HTML and the lectures themselves (as text files, in Bulgarian).
 
