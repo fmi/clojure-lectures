@@ -2,3 +2,7 @@
   title: 00. Учредително събиране
   date: 2014-02-25
   url: http://speakerdeck.com/skanev/clojure-0-2014
+'01':
+  title: 01. Въведение в Clojure
+  date: 2014-02-27
+  slug: 01-intro
