@@ -1,0 +1,469 @@
+= Днес
+
+* Функциите в Clojure
+* map, filter, reduce
+* Рекурсия
+* loop/recur
+
+= Предговор
+
+* Сайт на курса: [http://fmi.clojure.bg](http://fmi.clojure.bg)
+* Лекциите са в github: [gh:fmi/clojure-lectures]
+* Домашните са в github: [gh:fmi/clojure-homework]
+* Вие ни пращате pull request-и, а ние ви даваме точки
+
+= Първа задача
+
+* Публикувана е [първа задача](http://fmi.clojure.bg/tasks/1)
+* Имате време до вторник
+* Пуснете си [примернитете тестове](https://github.com/fmi/clojure-homework/blob/master/tasks/01/sample_test.clj) преди да предадете решение
+* За въпроси, вижте [съответната тема във форумите](http://fmi.clojure.bg/topics/89)
+* Не забравяйте да погледнете [gh:bbatsov/clojure-style-guide]
+
+= Функции
+== да припомним
+
+* Clojure програмите са изградени основно от функции
+* Функциите са първокласни обекти в Clojure
+* Всички аргументи се оценяват преди да се подадат на функцията (за разлика от специалните форми)
+
+= Функции
+
+:annotate
+
+  (defn work
+    "I'll do some work."
+    []
+    ;; work, work, work
+    :ready)
+
+  (def done? (fn [state]
+               (= state :ready)))
+
+  (work)         ; =>
+  (done? :yawn)  ; =>
+  (done? (work)) ; =>
+
+= #
+
+Кратък начин да създаваме малки функции.
+* `#(+ 5 %)`
+* `#(< % 3)`
+* `#(Math/pow %1 %2)`
+* `#(count %&)` – списък от всички аргументи
+* `#(#(+ % %))` – не можем да ги влагаме
+* Няма неявно `do`, само един израз
+
+= arity
+
+Дефиниции за различни на брой аргументи в една:
+:annotate
+  (defn call-a-master
+    ([] "Stefan is coming to save you!")
+    ([name] (str "Bootie-calling " name ". Get ready!")))
+
+  (call-a-master) ; =>
+  (call-a-master "Nikolay") ; =>
+
+= Функции от по-висок ред
+
+Функция, която или приема като аргумент функция или връща като резултат функция.
+:annotate
+  (defn fifth [l]
+    (first (rest (rest (rest (rest l))))))
+  (fifth [1 2 3 4 5])
+  ; =>
+
+  (def fifth-comp (comp first rest rest rest rest))
+  (fifth-comp [1 2 3 4 5])
+  ; =>
+
+Не става с макроси и специални форми
+:code
+  (comp and if)
+  ; CompilerException java.lang.RuntimeException: Can't take value of a macro:
+
+= Closures
+
+Функциите могат да достъпват всички дефиниции от обхвата, в който са създадени
+:annotate
+  (defn adder [x]
+    #(+ x %))
+
+  (def inc5 (adder 5))
+  (inc5 5)
+  ; =>
+
+  (def batmanize (let [s "Batman"]
+                   #(str % s)))
+  (batmanize "La la la ")
+  ; =>
+
+= map
+== Трансформиране на колекции
+
+:annotate
+  (map dec [2 7 4 18])           ; =>
+
+  (map (partial + 5) [1 2 3 4 5]) ; =>
+
+  (map vector [:do :si :la :sol])  ; =>
+
+  (map first [[1 2] [3 4] [5 6]])  ; =>
+
+  (map inc (map (fn [x] (* x x)) [4 7 9 15])) ; =>
+
+  (map max [3 8 5 10 7] [4 9 6 -1 11 12]) ; =>
+
+  (map #(str %1 " " %2 " " %3 ".")
+       ["Harry" "Bilbo" "The winter"]
+       ["owns" "has" "is"]
+       ["a Nimbus 2000" "the precious" "comming"])
+  ; ("Harry owns a Nimbus 2000." "Bilbo has the precious." "The winter is comming.")
+
+* Не връща вектор, въпреки че подаваме такъв
+* Резултата можем да ползваме по-същия начин както векторите
+
+= filter
+== Филтриране на елементите на колекции
+
+:annotate
+  (filter neg? [3 9 -14 0 -9 15]) ; =>
+
+  (remove neg? [3 9 -14 0 -9 15]) ; =>
+
+  (filter (complement nil?) [1 false 3 nil 5]) ; =>
+
+  (filter #(or (neg? %) (> % 100)) [3 -10 7 518 0]) ; =>
+
+  (filter pos? (map #(* -1 %) [-2 5 9 19])) ; =>
+
+= reduce
+== Събиране на колекция в едно нещо
+
+:annotate
+    (reduce max [3 19 4 7 28 5 100]) ; =>
+
+    (reduce * 1 [-4 5 19 0]) ; =>
+
+    (reduce + (filter pos? [-2 14 7 0 -5])) ; =>
+
+    (reduce into [] [[1] [2] [3] [4]]) ; =>
+
+= Функциите от по-висок ред
+== като инструмент за абстракции
+
+Приемат функции като аргументи, които променят поведението им:
+:annotate
+  (reduce max (filter even? [3 19 4 7 28 5 100])) ; =>
+  (reduce min (filter odd? [3 19 4 7 28 5 100]))  ; =>
+
+= Функциите от по-висок ред
+== като инструмент за абстракции
+
+:code
+  (defn each [coll f]
+    (when (seq coll)
+      (f (first coll))
+      (each (next coll) f)))
+
+  (defn generalized-each [coll f get-next]
+    (when (seq coll)
+      (f (first coll))
+      (generalized-each (get-next coll) f get-next)))
+
+  (defn even-more-generalized-each [coll f get-current get-next]
+    (when (seq coll)
+      (f (get-current coll))
+      (even-more-generalized-each
+       (get-next coll) f get-current get-next)))
+
+
+Следващите три реда правят едно и също:
+:code
+  (each [2 3 4 5] prn)
+  (generalized-each [2 3 4 5] prn next)
+  (even-more-generalized-each [2 3 4 5] prn first rest)
+  ; 2 3 4 5
+
+= `apply`
+
+Когато искаме да подадем много аргументи на функция, но ги имаме само в поредица.
+
+:annotate
+  (def strings ["fluffy" " jelly " "beans"])
+
+  (str strings)
+  ; =>
+
+  (apply str strings)
+  ; =>
+
+  (str (strings 0) (strings 1) (strings 2))
+  ; =>
+
+  (apply str (first strings) (rest strings))
+  ; =>
+
+  (apply str (first strings) (second strings) ["beans"])
+  ; =>
+
+  (apply max [1 2 2765234])
+  ; =>
+
+= `juxt`
+
+:annotate
+  ((juxt first last (partial apply +) (partial apply *)) [1 2 3 4 5])
+  ; =>
+
+  ((juxt inc dec (partial + 10) (partial * 4) (partial / 3)) 20)
+  ; =>
+
+  ((juxt identity name) :keyword)
+  ; =>
+
+  ((juxt first count last identity) "Clojure Rocks")
+  ; =>
+
+  ((juxt * / -) 4 2)
+  ; =>
+
+* Приема няколко функции и връща функция
+* Върнатата функция приема произволен брой аргументи
+* Аргументите се подават последователно на функциите от ляво на дясно
+* Връща се вектор с резултатите от прилагането на функциите над аргументите
+
+= Композиция
+== `comp`
+
+:annotate
+  (def non-zero? (comp not zero?))
+  (non-zero? 3)
+  ; =>
+
+  (non-zero? 0)
+  ; =>
+
+  (def concat-and-reverse (comp (partial apply str) reverse str))
+  (concat-and-reverse "The" " force" " is" " strong.")
+  ; =>
+
+  (concat-and-reverse "amore" "roma")
+  ; =>
+
+  ((comp inc dec) 10)
+  ; =>
+
+= Композиция
+== Стрелки
+
+* Стрелките (или threading macros) ни позволяват лесно да правим композиции
+* Спестяват ни грозното влагане, което няма как да индентираме добре
+* Представят поредица от трансформации върху начални данни
+* Резултатът от предната транформация се подава на следващата
+* Освен функции можем да подаваме и изрази
+* Дори някой от изразите да не е списък, стрелките го правят списък
+* Ползват се супер много
+
+= ->
+
+`->` слага стойността на *второ* място в списъка (първи аргумент)
+:code
+  (-> 5
+      (+ 15)
+      inc
+      (* 2)
+      (str " is the answer"))
+  ; 42 is the answer
+
+Свежда се до следната форма:
+:code
+  (str
+    (*
+      (inc
+        (+ 5 15)) 2)" is the answer")
+= ->
+
+На мястото на подчертавката се поставя резултатът от предната трансформация.
+:code
+  (-> 5
+      (+ _ 15)
+      (inc _)
+      (* _ 2)
+      (str _ " is the answer"))
+
+= ->>
+
+`->>` слага стойността на *последно* място в списъка (последен аргумент)
+:code
+  (->> (range 10)
+       (filter even?)
+       (map #(* % %))
+       (reduce +)) ; 120
+
+Свежда се до следната форма:
+:code
+  (reduce +
+    (map #(* % %)
+      (filter even?
+        (range 10))))
+
+= ->>
+
+На мястото на подчертавката се поставя резултатът от предната трансформация.
+:code
+  (->> (range 10)
+       (filter even? _)
+       (map #(* % %) _)
+       (reduce + _))
+
+= рекурсията – враг на народа
+
+:annotate
+  (defn pow [base exp]
+    (if (zero? exp)
+      1
+      (* base (pow base (dec exp)))))
+
+  (pow (bigint 2) (bigint 10000))
+  ; =>
+
+Това не е опашкова рекурсия.
+
+= опашати степени
+
+:annotate
+  (defn pow [base exp]
+    (letfn [(pow-helper [base exp acc]
+              (if (zero? exp)
+                acc
+                (pow-helper base (dec exp) (* base acc))))]
+      (pow-helper base exp 1)))
+
+  (pow (bigint 2) (bigint 10000))
+  ; =>
+
+JVM не поддържа оптимизация на опашкова рекурсия.
+
+= recur
+:annotate
+  (defn pow [base exp]
+    (letfn [(pow-helper [base exp acc]
+              (if (zero? exp)
+                acc
+                (recur base (dec exp) (* base acc))))]
+      (pow-helper base exp 1)))
+
+  (pow (bigint 2) (bigint 10000))
+  ; =>
+
+= loop
+
+За разлика от Scheme, в Clojure имате лесен начин да правите итеративни процеси без да правите рекурсивни функции.
+
+= loop
+== Прост пример
+
+:code
+  (loop [x 0]
+    (when (< x 10)
+      (println x)
+      (recur (inc x))))
+
+* Първата форма са двойки `име начална-стойност`
+* Всяко извикване на `recur` връща изпълнението в началото на `loop`
+* Подадените аргументи на `recur` са новите стойности на имената в `loop`
+* `recur` трябва да бъде в tail позиция
+
+= tail позиция
+== ...и нейната липса
+
+Казваме, че последния извикан израз в една функция е "в опашкова позиция" (tail position).
+
+Тук `factorial` не е в tail позиция:
+
+:annotate
+  (defn factorial [n]
+    (if (= n 1)
+      1
+      (* n (factorial (dec n)))))
+
+  (factorial 5) ; =>
+
+* За сметка на това, `*` е в "опашкова позиция"
+
+= tail позиция
+== ...втори опит
+
+Тук `factorial` вече е в опашкова позиция:
+
+:annotate
+  (defn factorial [n counter]
+    (if (= n 1)
+      counter
+      (factorial (dec n) (* counter n))))
+
+  (factorial 5 1) ; =>
+
+* Функцията внезапно започна да приема странен втори аргумент.
+* Това трябва да ви е познато от Scheme, където това генерира "итеративен", а не "рекурсивен" процес.
+* В Clojure горния код ще генерира рекурсивен процес. Защо?
+
+= tail позиция
+== ...този път наистина
+
+Тук `factorial` вече е в опашкова позиция:
+
+:annotate
+  (defn factorial [n counter]
+    (if (= n 1)
+      counter
+      (recur (dec n) (* counter n))))
+
+  (factorial 5 1) ; =>
+
+= Досадния втори аргумент
+== Моля не правете това вкъщи. Или въобще.
+
+Можете да замажете нещата по следния начин...
+
+:annotate
+  (defn factorial
+    ([n] (factorial n 1))
+    ([n counter]
+      (if (= n 1)
+        counter
+        (recur (dec n) (* counter n)))))
+
+  (factorial 5) ; =>
+
+* Вероятно бихте направили нещо подобно в Scheme
+* В Clojure би било глупаво
+* Ползвайте `loop/recur`
+
+= Финалната версия
+== ...или как да пишем Fortran на Clojure
+
+:annotate
+  (defn factorial [n]
+    (loop [result 1 counter n]
+      (if (zero? counter)
+        result
+        (recur (* result counter) (dec counter)))))
+
+  (factorial 5) ; =>
+
+* Разбира се, това е далеч от идиоматичен Clojure код
+
+= Финалната версия (2)
+== Ама този път наистина "наистина"
+
+:annotate
+  (defn factorial [n]
+    (reduce * (range 1 (inc n))))
+
+  (factorial 5) ; =>
+
+* Как работи това - вижте документацията.
+* Припомняме: достъпна е в тези слайдове.
