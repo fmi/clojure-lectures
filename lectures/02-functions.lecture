@@ -96,7 +96,7 @@
 
   (def batmanize (let [s "Batman"]
                    #(str % s)))
-  (batmanize "La la la ")
+  (batmanize "Na na na ")
   ; =>
 
 = map
@@ -279,10 +279,8 @@
 
 Свежда се до следната форма:
 :code
-  (str
-    (*
-      (inc
-        (+ 5 15)) 2)" is the answer")
+  (str (* (inc (+ 5 15)) 2)" is the answer")
+
 = ->
 
 На мястото на подчертавката се поставя резултатът от предната трансформация.
