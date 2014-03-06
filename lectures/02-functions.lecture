@@ -65,6 +65,134 @@
   (call-a-master) ; =>
   (call-a-master "Nikolay") ; =>
 
+= Деструкториране на аргументи на функции
+
+Понякога аргументите на функция са структори от данни като: вектори, списъци, множества и асоциативни масиви. За да достъпим част от такива структори от данни можем да направим нещо такова за мап:
+:annotate
+  (defn currency-of
+    [m]
+    (let [currency (get m :currency)]
+      currency))
+
+Или таков за вектор:
+:annotate
+  (defn currency-of
+    [pair]
+    (let [amount   (first  pair)
+          currency (second pair)]
+      currency))
+
+Tова обаче е шаблонен код който е хубаво да избягваме. Clojure има спецялен синтаксис за деструкториране на аргументи на функции.
+
+= Позиционно деструкториране
+
+Използва се за деструкториране на вектори. Заместваме аргумента с вектор който има "placeholders" на позициите които искаме да прихванем. Например ако знаем че аргумента е двойка:
+:annotate
+  (defn currency-of
+    [[amount currency]]
+    currency)
+
+Тъй като локално не ползваме amount можем да го пропуснем по следният начин:
+:annotate
+  (defn currency-of
+    [[_ currency]]
+    currency)
+
+Дестукторирането може да бъде влагано:
+:annotate
+  (defn first-first
+    [[[i _] _]]
+    i)
+
+То работи точно по същият начин за let свързванията:
+:annotate
+  (let [pair         [10 :gbp]
+        [_ currency] pair]
+    currency)
+
+= Деструкториране на мапове
+
+Деструкторирането на мапове работи по малко по-различен начин:
+:annotate
+  (defn currency-of
+    [{currency :currency}]
+    currency)
+
+В примера по-горе искаме да свържем стойноста за ключа :currency за currency, но ключовете не е задължително да бъдат ключови думи. В следващите 2 примера ключът е низ и символ съответно:
+:annotate
+  (defn currency-of
+    [{currency "currency"}]
+    currency)
+
+:annotate
+  (defn currency-of
+    [{currency 'currency}]
+    currency)
+
+= Деструкториране на мапове (продължение)
+
+Когато деструкторираме няколко ключа наведнъж е по-удобно да ползваме малко по-различен синтаксис:
+:annotate
+  (defn currency-of
+    [{:keys [currency amount]}]
+    currency)
+
+Горният пример допуска че ключовете на мапа ще бъдат ключови думи. Същото може да бъде направено с низове и символи:
+
+:annotate
+  (defn currency-of
+    [{:strs [currency amount]}]
+    currency)
+
+:annotate
+  (defn currency-of
+  [{:syms [currency amount]}]
+  currency)
+
+Можем да предоставим подразбиращи се стойности за ключовете които може да липсват. Това често се използва за мимикиране на поддръжка на именовани аргументи:
+:annotate
+  (defn currency-of
+    [{:keys [currency amount] :or {currency :gbp}}]
+    currency)
+
+Също както позиционното деструкториране, речниковото работи по същия начин с let:
+:annotate
+  (let [money                {:currency :gbp :amount 10}
+        {currency :currency} money]
+    currency)
+
+= Функции с променлив брой аргументи
+
+За да дефинираме функция с променлив брой аргументи префиксваме опционалните аргументи с амперсанд (&):
+:annotate
+  (defn log
+    [message & args]
+    (println "args: " args))
+
+  (log "message from " "192.0.0.76")
+  ; args: (192.0.0.76)
+
+  (log "message from " "192.0.0.76" "service:xyz")
+  ; args: (192.0.0.76 service:xyz)
+
+Както се вижда опционалните аргументи са пакетирани в списък (args).
+
+= Допълнителни аргументи като именовани параметри
+
+Именованите параметри се постигат чрез използване на деструкториране на функция с променлив брой аргументи. Това позволява по ясно и четимо извикване на функция:
+:annotate
+  (defn job-info
+    [& {:keys [name job income] :or {job "unemployed" income "$0.00"}}]
+    (if name
+      [name job income]
+      (println "No name specified")))
+
+  (job-info :name "Иван" :job "айляк")
+  ; =>
+
+  (job-info :job "Engineer")
+  ; No name specified
+
 = Функции от по-висок ред
 
 Функция, която или приема като аргумент функция или връща като резултат функция.
