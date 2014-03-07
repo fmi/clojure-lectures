@@ -1,0 +1,540 @@
+= Днес
+
+* Знаци, низове, keywords
+* Printing
+* Списъци, cons, quote
+* Мапове
+* Множества
+
+= Знаци
+== aka Characters
+
+:annotate
+  ; Обозначават се с обратна наклонена
+  \j         ; =>
+
+  ; Компилират се до Java chars
+  (class \j) ; =>
+
+  ; Различни представяния според префикс
+  \u00ff     ; =>
+  \o41       ; =>
+
+  ; Специални знаци
+  \space     ; =>
+  \newline   ; =>
+  \formfeed  ; =>
+  \return    ; =>
+  \backspace ; =>
+  \tab       ; =>
+
+= Низове
+== aka Strings
+
+* Низовете в Clojure са Java низове (тоест инстанции на `java.lang.String`)
+* Заградени са от двойни кавички `"` (с единични не получаваме низ)
+* Екранирането на специални знаци e както в Java
+* Низ може да се запише на няколко реда
+* Няма интерполация
+
+= Низове
+== Примери
+
+:annotate
+  "John Frusciante"                                 ; =>
+
+  "\"WAGRRRRWWGAHHHHWWWRRGGAWWWWWWRR\" - Chewbacca" ; =>
+
+  "Hey Derpina, whatcha doin'?"                     ; =>
+
+  'mmmnope'                                         ; =>
+
+  "This text contains\none newline"                 ; =>
+
+* Забележете, че `'mmmnope'` *не е* низ
+
+= Операции с низове
+== Част 1
+
+:annotate
+  (str "/photos/" 42 "/edit")        ; =>
+
+  (str [6 8 1])                      ; =>
+
+  (apply str [6 8 1])                ; =>
+
+  (string? "Am I a String or what?") ; =>
+
+  (count "Mitth'raw'nuruodo")        ; =>
+
+  (subs "Clojure" 1 3)               ; =>
+
+* В `clojure.core` горе-долу е това
+
+= Операции с низове
+== Част 2
+
+В [clojure.string](http://clojure.github.io/clojure/clojure.string-api.html) обаче имаме и други благинки:
+
+:annotate
+  (clojure.string/blank? "   ")                               ; =>
+
+  (clojure.string/capitalize "OmG ZoMG WTF!!!")               ; =>
+
+  (clojure.string/upper-case "OmG ZoMG WTF!!!")               ; =>
+
+  (clojure.string/lower-case "OmG ZoMG WTF!!!")               ; =>
+
+  (clojure.string/replace "The sky is brown" #"brown" "blue") ; =>
+
+  (clojure.string/reverse "larodi")                           ; =>
+
+  (clojure.string/join ", " [3 2 1])                          ; =>
+
+  (clojure.string/split "q1w2e3r4t5y6u7i8o9p0" #"\d+")        ; =>
+
+  (clojure.string/trim "     a      ")                        ; =>
+
+  ; ...
+
+= Keywords
+== Всички обичат `:raymond`
+
+* Оценяват се на себе си
+* Започват с `:` (не е част от името на keyword-a)
+* Интернирани са – два обекта с една и съща стойност се пазят само веднъж в паметта: `(identical? :baba :baba)`
+* По-смислени са от низове за константни специални стойности, защото се пишат по-лесно и заемат по-малко памет
+* Сравняват се доста бързо (по-бързо от низовете)
+* Често се ползват като ключове в мапове
+* Могат да се извикват като функция върху колекция (най-често мап)
+* Имаме и `::keyword` (namespace-qualified keywords), но за тях по-нататък
+
+= Keywords
+== Примери
+
+:annotate
+  (defn create-user [name role]
+    (let [internal-role-id (case role
+                             :admin 19
+                             :editor 11
+                             -2)]
+      (str "Created user with name " name
+           " and ID of " internal-role-id)))
+
+  (create-user "Barry" :lame-user) ; =>
+  (create-user "Borry" :admin)     ; =>
+
+* Адекватно използване на keyword-и като константни специални стойности
+
+= Keywords
+== Примери
+
+:annotate
+  (def team [{:name "Mira"   :life-stage :young-lady}
+             {:name "Dakata" :life-stage :young-guy}
+             {:name "Ivo"    :life-stage :young-guy}
+             {:name "Stefan" :life-stage :old-guy-with-beard}
+             {:name "Hristo" :life-stage :young-guy}])
+
+  (map :name team) ; =>
+
+* `{}` - литерал за мап (`{key val key val ...}`)
+* Ползваме `:name` като функция върху мап и така достъпваме съответната стойност
+
+= Keywords
+== Операции
+
+:annotate
+  (keyword "eddie") ; =>
+  (keyword 'kurt)   ; =>
+  (name :layne)     ; =>
+  (keyword? :chris) ; =>
+
+= Printing
+== или как да изведем нещо на екрана
+
+Разполагаме с няколко функции за извеждане на обекти на output stream-a
+
+:code
+  (pr ['oh :my "GOD" \o41])    ; => [oh :my "GOD" \!]
+  (print ['oh :my "GOD" \o41]) ; => [oh :my GOD !]
+
+* `pr` извежда обект(и) така, че да могат да бъдат четени от reader-a
+* `prn` - като `pr`, но добавя и нов ред накрая
+* `print` извежда обект(и) така, че да са удобни за четени от човек
+* `println` - като `print`, но добавя и нов ред накрая
+* `print` (`println`) вътрешно извиква `pr` (`prn`), после маха кавички, екраниране и т.н.
+
+= Printing
+== `-str` версии на предишните функции
+
+:code
+  (pr ['oh :my "GOD" \o41])          ; => [oh :my "GOD" \!]
+  (pr-str ['oh :my "GOD" \o41])      ; => "[oh :my \"GOD\" \\!]"
+
+  (prn ['oh :my "GOD" \o41])         ; => [oh :my "GOD" \!]
+  (prn-str ['oh :my "GOD" \o41])     ; => "[oh :my \"GOD\" \\!]\n"
+
+  (print ['oh :my "GOD" \o41])       ; => [oh :my GOD !]
+  (print-str ['oh :my "GOD" \o41])   ; => "[oh :my GOD !]"
+
+  (println ['oh :my "GOD" \o41])     ; => [oh :my GOD !]
+  (println-str ['oh :my "GOD" \o41]) ; => "[oh :my GOD !]\n"
+
+* Грубо казано, връщат резултата от съответната версия на функцията, но преобразуван в низ
+
+= Списъци
+
+:annotate
+  (list 'a 'b 'c 'd 'e 'f 'g)
+  (list 1 2 3)
+
+* Създават се с `list`
+* Ползват се като част от синтаксиса и при писане на макроси
+* Едносвързан списък, пази се само началото
+* Стават за стек
+* Добавянето отпред е `O(1)`
+* Добавянето отзад е `O(n)`!
+* Достъпването на елемент по индекс също е `O(n)`
+* `count`, учудващо, е в константно време
+
+= Списъци
+== И малко разлики от векторите
+
+:annotate
+  (def l '(:lettuce :tomato :cheese))
+  (def v [:lettuce :tomato :cheese])
+
+  (conj l :salami) ; =>
+  (conj v :salami) ; =>
+
+  (peek l) ; =>
+  (peek v) ; =>
+
+  (pop l)  ; =>
+  (pop v)  ; =>
+
+= cons
+== Не-точно-Scheme
+
+`cons` създава лиспоподобен cons cell. Това е различно от списък:
+
+:annotate
+  (cons 1 nil)          ; =>
+  (cons 1 (cons 2 nil)) ; =>
+
+  (class (cons 1 (cons 2 nil))) ; =>
+  (class '(1 2))                ; =>
+
+Появява се тук-таме
+
+= Цитиране
+== Или още "quoting"
+
+Обикновено се ползват двойни кавички и курсив:
+
+{{{
+<blockquote>Alas, poor Yorick! I knew him, Horatio!</blockquote>
+}}}
+
+= Цитиране
+== ...а сега, в Clojure
+
+Става с `quote` или reader макроса `'`
+
+:annotate
+  (def answer 42)
+
+  answer                      ; =>
+  'answer                     ; =>
+
+  (quote [1 answer :keyword]) ; =>
+  [1 answer :keyword]         ; =>
+
+  (quote (+ answer 1))        ; =>
+  (+ answer 1)                ; =>
+
+  '(one two :three)           ; =>
+  'foo                        ; =>
+
+* Специална форма
+* `quote` не оценява подадения му израз, а го връща като структура от данни
+* Мощен инструмент (code as data)
+
+= maps
+
+* Фундаментална структура (както по принцип, така и в Clojure)
+* Много имена: хешове, речници, асоциативни масиви и т.н.
+* Ще предпочитаме неологизма "мап" (мн.ч. мапове)
+* Различно от <abbr title="higher-order function">HOF</abbr>-а `map`
+* Съпоставя ключове на стойности
+
+= maps
+== Синтаксис
+
+:annotate
+  {}
+  {:name "Luke Skywalker" :job "Jedi" :gender :male}
+  {:name "Inertia Creeps" :album "Mezzanine"}
+  {1 "one", 2 "two", 3 "three"}
+
+= maps
+== Just the facts
+
+* Всеки Clojure тип може да е ключ. Immutability-то помага (би било проблем иначе)
+* Ключовете трябва да спазват стандартната `Object.equals` и `Object.hashCode` семантика
+* Реализацията е по-сложна от хеш таблица. Има няколко вида мапове
+* Ползват се постоянно
+* <code>log<sub>32</sub>(n)</code>
+
+= maps
+== Достъпване
+
+:annotate
+  (def song
+    {:name "Inertia Creeps"
+     :album "Mezzanine"
+     :artist "Massive Attack"})
+
+  ; map-овете са функции
+  (song :name)  ; =>
+
+  ; Можете да вземете ключове и стойности
+  (keys song) ; =>
+  (vals song) ; =>
+
+  ; Самият мап е последователност от MapEntry-та
+  (seq song)
+  ; =>
+
+  (class (first (seq song))) ; =>
+
+= maps
+== Модификации
+
+:annotate
+  (def numbers {:one 1 :two 2 :three 3})
+
+  ; Добавяне на елемент
+  (assoc numbers :four 4)
+  ; =>
+
+  ; Премахване на елемент по ключ
+  (dissoc numbers :two)
+  ; =>
+
+  ; "Смесване" на два map-а
+  (merge numbers {:four 4 :five 5})
+  ; =>
+
+  ; into и conj работят и за хешове
+  (conj numbers [:four 4])
+  ; =>
+  (into numbers [[:four 4] [:five 5]])
+  ; =>
+  (into numbers {:one "Ho-ho-ho!" :seven 7})
+  ; =>
+
+= maps
+== Достъпване по ключове
+
+Всъщност, имате три варианта:
+
+:annotate
+  (def track {:name "A Love Supreme", :artist "John Coltrane"})
+
+  ; Стандартния начин
+  (track :name)                ; =>
+  (track :album)               ; =>
+  (track :album "Unknown")     ; =>
+
+  ; get
+  (get track :name)            ; =>
+  (get track :album)           ; =>
+  (get track :album "Unknown") ; =>
+
+  ; Keyword-ите също са функции
+  (:name track)                ; =>
+  (:album track "Unknown")     ; =>
+
+  ; Имаме и `find`, който връща `MapEntry`
+  (find track :name)           ; =>
+
+* Използвайте keyword-и като функции, понеже е консистентно с `defrecord`...
+* ...иначе ползвайте map-а като функция...
+* ...и ползвайте `get` само когато не знаете дали наистина имате map
+
+= maps
+== ArrayMaps
+
+:annotate
+  (array-map :one 1 :two 2 :three 3) ; =>
+
+* Мап поддържащ реда на ключовете си
+* Имплементиран е като масив от ключ стойност ключ стойност...
+* Линеен достъп (`O(n)`) => подходящ за малки мапове
+* Имплементира напълно интерфейса на маповете
+
+= maps
+== ArrayMaps
+
+* От литерал за мап, Clojure създава подходящия мап
+
+:annotate
+  (class {:a 1 :b 2 :c 3})                               ; =>
+  (class {:a 1 :b 2 :c 3 :d 4 :f 5 :h 6 :i 7 :j 8 :k 9}) ; =>
+
+= Множества
+
+* Съвсем като крайните такива в математиката
+* Нямат подредба
+* Нямат повторения
+* Синтаксис: `#{1 2 3}`
+* Ползват се по-често от колкото си мислите
+
+= Множества
+== Синтаксис
+
+:annotate
+  (def favorites #{"John Coltrane" "Melissa Horn" "Morphine"})
+
+  (conj favorites "Nirvana")
+  ; =>
+
+  (conj favorites "Morphine")
+  ; =>
+
+  (disj favorites "Melissa Horn")
+  ; =>
+
+= Множества
+== Достъпване
+
+:annotate
+  (def primes #{13 11 7 5 3 2})
+
+  (seq primes)         ; =>
+
+  (primes 11)          ; =>
+  (primes 4)           ; =>
+
+  (contains? primes 7) ; =>
+  (contains? primes 4) ; =>
+
+  (get primes 11)      ; =>
+  (get primes 19 :eh)  ; =>
+
+= Множества
+== Като функции
+
+Всяко множество е функция на елементите си:
+
+:annotate
+  (def nums [1 2 3 4 5 6 7 8 9 10])
+
+  (remove (fn [x] (or (= x 2) (= x 5))) nums)
+  ; =>
+
+  (remove #{2 5} nums)
+  ; =>
+
+  (remove (complement #{2 5 7 11 13 17 19}) nums)
+  ; =>
+
+= Множества
+== false и nil
+
+`(a-set x)` връща `x`, ако `x` е елемент от `a-set`. Това прави множествата съдържащи `nil` или `false` по-странни:
+
+:annotate
+  (def weird #{42 nil false true})
+
+  (if (weird 42)    :yes :no) ; =>
+  (if (weird true)  :yes :no) ; =>
+  (if (weird nil)   :yes :no) ; =>
+  (if (weird false) :yes :no) ; =>
+
+Може да ползвате `contains?`:
+
+:annotate
+  (contains? #{false nil} false) ; =>
+  (contains? #{false nil} nil)   ; =>
+
+= contains?
+== Achtung!
+
+*Важно:* `contains?` не връща дали даден елемент се намира в колекция. Връща дали съществува такъв индекс:
+
+:annotate
+  (contains? [:foo :bar] :foo) ; =>
+  (contains? [:foo :bar] 1)    ; =>
+  (contains? [:foo :bar] 2)    ; =>
+
+= Множества
+== Други операции
+
+В [clojure.set](http://clojure.github.com/clojure/clojure.set-api.html) има по-интересни операции за множества:
+
+:annotate
+  (use 'clojure.set)
+
+  (difference #{1 2 3 4} #{2 4 6 8}) ; =>
+  (intersection #{1 2 3} #{2 3 4 5}) ; =>
+  (subset? #{1 2} #{0 1 2 3})        ; =>
+  (union #{0 1 2 3} #{2 3 4 5})      ; =>
+
+= Equality
+:annotate
+  (= [1 2 3] '(1 2 3))      ; =>
+  (= #{1 2 3} #{3 2 1})     ; =>
+  (= {1 2, 3 4} {1 2, 3 4}) ; =>
+
+  (= {:a 1} {:a 1})          ; =>
+  (identical? {:a 1} {:a 1}) ; =>
+
+= Как сортираме в Clojure?
+
+{{{<img src="03-strings-maps-sets/bate-encho.jpg" width="50%">}}}
+
+= Comparator-и
+== Кой е по-по-най
+
+Двуаргументна функция, която връща:
+
++ Отрицателно число, когато първият аргумент е "по-малък" от втория
++ 0, когато е "равен" на втория
++ Положително число, когато е "по-голям" от втория
+
+= Comparator-и
+== Кой е по-по-най
+
+* Всички Clojure функции могат да се използват като comparator-и
+* Естествено не всички са предвидени да се ползват като такива
+* Всеки двуместен предикат ще свърши работа
+
+= Comparator-и
+== Примери
+
+:annotate
+  (sort < (repeatedly 10 #(rand-int 100)))          ; =>
+  (sort-by :rank [{:rank 2} {:rank 3} {:rank 1}])   ; =>
+  (sort-by :rank > [{:rank 2} {:rank 3} {:rank 1}]) ; =>
+
+= compare
+== Comparator-ът по подразбиране
+
+:annotate
+  ; По-дългият вектор e "по-голям"
+  (compare [0 1 2] [0 1 2])   ; =>
+  (compare [1 2 3] [0 1 2 3]) ; =>
+  (compare [0 1 2] [3 4])     ; =>
+
+  ; nil винаги е "по-малък"
+  (compare nil [1 2 3])       ; =>
+
+  ; Низовете се сравняват лексикографски
+  (compare "abc" "def")       ; =>
+
+* Може да сравни доста неща: низове, числа, поредици, булеви стойности, ключови думи, символи и др.
+* Въобще поддържа всичко, което имплементира `java.lang.Comparable`
+* comparator по default
