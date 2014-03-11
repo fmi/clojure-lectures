@@ -433,7 +433,7 @@ abs(-1);
 * `when-not` е като `(when (not ))`.
 * `if-not` е като `(if (not ))`.
 
-= nil/truthiness
+= nil/truthfulness
 
 Лъжа са само `false` и `nil`:
 
