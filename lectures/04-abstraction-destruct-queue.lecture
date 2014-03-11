@@ -1,0 +1,479 @@
+= Днeс
+
+* Абстракции: обобщен поглед над познатите колекции
+* List comprehension
+* Деструктуриране
+* Immutable, persistent опашка
+* The Reader
+
+= Какво знаем до тук за колекциите?
+:annotate
+  ; списък
+  '(x y :z 7)
+
+  ; вектор
+  ['x 'y :z 7]
+
+  ; мап
+  {:name "Ivo" :gender :male}
+
+  ; множество
+  #{1 2 3}
+
+  ; множество от мапове
+  #{{:name "Ivo" :gender :male}
+    {:name "Mira" :gender :female}
+    {:name "Hristo" :gender :male}
+    {:name "Iordan" :gender :male}}
+
+  ; различно е от функцията мап
+    (map str [1 2 3 4 5])                 ; =>
+
+= Колекциите са хетерогенни, immutable и persistent
+
+* Какво се крие зад имплементацията на persistent vector?
+
+* Да добавим още един елемент.
+
+* Нека да променим елемент в средата на вектора.
+
+* Как се махат елементи?
+
+* Ще построим подобно дърво в Clojure в лекция 10.
+
+= Полиморфизъм над колекции
+== имплементират интерфейса clojure.lang.IPersistentCollection
+
+`conj` - добавя елемент към колекция и запазва типа и
+:annotate
+  (conj '(1 2 3) 4)                         ; =>
+  (conj [1 2 3] 4)                          ; =>
+  (conj [] 1 2 3)                           ; =>
+
+`seq` - връща елементите на колекцията в абстрактна последователност
+
+`count` - връща бройката елементи в колекцията
+
+`empty` - връща празна инстанция от типа на колекцията
+:annotate
+  (empty  #{:a :b :c})                      ; =>
+  (empty [1 2 3])                           ; =>
+  (class (empty '(1 2 3)))                  ; =>
+  (class (empty  #{:a :b :c}))              ; =>
+
+= Сравняване на колекции
+== Всички колекции могат да се сравняват помежду си
+
+Различните видове колекции са равни когато имат еднакви елементи в същата подредба
+:annotate
+  (= [1 2 3] '(1 2 3))                       ; =>
+  (= [1 2 3] '(2 1 3))                       ; =>
+  (= [] '())                                 ; =>
+  (= [1 2 3] '(1 2))                         ; =>
+
+Маповете могат да бъдат равни само на други мапове
+:annotate
+  (= {{:1 :а} {:2 :b}} {{:2 :b} {:1 :а}})    ; =>
+  (= {:3 :c} {:c :3})                        ; =>
+  (= {} '())                                 ; =>
+
+Множествата могат да бъдат равни само на други множества
+:annotate
+  (= #{:a :b :c} #{:b :c :a})                ; =>
+  (= {} #{})                                 ; =>
+  (= #{:a :b :c} [:a :b :c])                 ; =>
+
+= Последователности
+== имплементират интерфейса clojure.lang.Seqable
+
+Как се създават последователности
+:annotate
+  (seq (range 0 20 3))          ; =>
+  (seq "Example")               ; =>
+  (seq {:a 5 :b 6})             ; =>
+  (seq [])                      ; =>
+  (seq nil)                     ; =>
+
+  (cons 0 '(1 2 3 4 5))         ; =>
+  (cons 0 [1 2 3 4 5])          ; =>
+
+  (list* 0 1 2 (range 3 6))     ; =>
+
+  ;Внимавайте
+  (class (cons 0 (cons 1 nil))) ; =>
+  (class (list* 0 1 [2]))       ; =>
+
+  (list? (list* 0 (range 1 6))) ; =>
+
+= Операции върху последователности
+
+Можете да вземате елементите според позицията им
+:annotate
+  (first ['x 'y 'z])            ; =>
+  (rest ['x 'y 'z])             ; =>
+  (next ['x 'y 'z])             ; =>
+
+  (rest ['x])                   ; =>
+  (next ['x])                   ; =>
+  ;използването им ще добие повече смисъл когато разгледаме и мързеливи колекции
+
+Колекциите и техните съставни части са винаги immutable
+:annotate
+  (let [list (range 5)
+      head (first list)
+      tail (next list)]
+    (prn (+ head 1))
+    (prn (map str tail))
+    (prn (map #(+ 3 %) list))
+    (prn (conj list 4) (conj tail 4)))
+  ; =>
+
+= Асоциативни колекции
+
+`assoc` - прави асоциация между ключ и стойност
+`dissoc` - премахва асоциацията между ключ и стойност
+`get` - взема стойността отговаряща на ключ
+`contains?` - предикат, който проверява дали даден ключ има асоциирана стойност
+
+:annotate
+  (def ico {:name "Hristo"
+            :age 22
+            :gender :male})
+  ico                               ; =>
+  (get ico :phone)                  ; =>
+  (assoc ico :nationality :BG)      ; =>
+  (dissoc ico :age)                 ; =>
+
+  (def ico ["Hristo" 22 :male])     ; =>
+  (get ico 6)                       ; =>
+  (assoc ico 3 :BG)                 ; =>
+  ; няма dissoc за вектори
+
+  (contains? ico 3)                 ; =>
+  (contains? [1 2 3] 0)             ; =>
+
+= Индексирани колекции
+
+Асоциативни колекции, където индексите са ключове.
+:annotate
+  (def team [:mira :ivo :hristo :dakata]) ; =>
+  (nth team 3)                            ; =>
+  (get team 3)                            ; =>
+
+  ; (nth team 9) would result in java.lang.IndexOutOfBoundsException
+  (get team 9)                            ; =>
+
+  ;(nth :hristo 2) would result in UnsupportedOperationException
+  (get :hristo 2)                         ; =>
+
+= Още малко генерични функции
+
+Kолекциите могат да се ползват като функции
+:annotate
+  ([:ico :ivo :dakata] 2)                 ; =>
+  ({:name "Hristo" :age 22} :name)        ; =>
+
+Keyword-ите също могат да са функции
+:annotate
+  (:name {:name "Hristo" :age 22})        ; =>
+
+Koй начин на достъп да ползваме и кога?
++ Използвайте keyword-а като функция (консистентно с records)
++ Използвайте колекцията като функция
++ Използвайте get когато не знаете каква колекция обработвате
++ Използвайте nth когато искате да получите exception за некоректен достъп
+
+= Стекове
+
+`conj` - преизползваме добавянето на елементи към колекция
+`pop` - премахва стойността на върха на стека
+`peek` - връща стойността на върха на стека
+
+Макар че добавят в различен ред и векторите и списъците в Clojure са стекови колекции
+:annotate
+  (def pills (conj '() :red :blue :green)) ; =>
+  (peek pills)                             ; =>
+  (conj pills :pink)                       ; =>
+  (pop pills)                              ; =>
+
+Как бихте реализирали хетерогенна, immutable, persistent опашка?
+
+= List comprehension
+== Конструкция, която позволява лесно създаване на нова колекция от съществуваща
+
+Специалната форма (for seq-exprs body-expr)
+:code
+  (for [x [0 1 2 3 4 5]] (* 2 x))  ; =>
+
+  (def vect
+    (for [x [0 1 2 3 4 5]
+          y '(0 1 2 3 4 5)]
+         (* x y)))
+  vect                             ; =>
+
+  ; Можем да използваме конструкция let
+  (def vect
+    (for [x (range 1 6) :let [y (+ x 3)
+	                            z (- x 3)]]
+         [x y z]))
+
+  vect                             ; =>
+
+
+= List comprehension
+== Филтриране
+
+:annotate
+  ; Можете да филтрирате резултати
+  (for [x [0 1 2 3 4 5]
+       :when (even? x)]
+       (* 3 x))
+  ; =>
+
+  ;Можете да филтрирате и по сметнатите в let изрази
+  (for [x [0 1 2 3 4 5]
+       :let [y (* x 3)]
+       :when (even? y)]
+       y)
+  ; =>
+
+  ; Ползване на :while
+  (for [x (range 3) y (range 3)
+      :when (not= y 0)]
+      [x y])
+  ; =>
+
+  (for [x (range 3) y (range 3)
+      :while (not= y 0)]
+      [x y])
+  ; =>
+
+= for
+== за напреднали
+:annotate
+  (def pythagorean
+    (for [z (range 26)
+          y (range 26)
+          :while (< y z)
+          x (range 26)
+          :while (< x y)
+          :let [xx (* x x)
+                yy (* y y)
+                zz (* z z)]
+          :when (= (+ xx yy) zz)]
+      [x y z]))
+  pythagorean
+  ; =>
+
+= doseq
+
+Изпълнява функции за резултатните стойности, заради странични ефекти (връща nil)
+:annotate
+  (doseq [x [1 2 3]
+          y [1 2 3]]
+    (prn (* x y)))
+  ; =>
+
+  (doseq [x (range 3)
+          y (range 3)
+         :when (not= y 0)]
+    (prn (* x y)))
+  ; =>
+
+  (doseq [x (range 10)
+       :let [y (+ x 3)]
+       :when (= 0 (mod y 3))]
+     (prn [x y]))
+  ; =>
+
+Когато искате да създадете колекция - изпозлвайте for
+Когато искате да логвате резултати - използайте doseq
+
+= Деструктуриране на аргументи
+
+Подадените аргументи се разделят, така че да съвпаднат с шаблона за деструктуриране
+:annotate
+  (defn destruct [[a b c d]]
+    (prn b)
+    (prn d)
+    (+ b d))
+  (destruct (range 10))
+  ; =>
+
+  (defn log-user [{name :name age :age }] (println name " is " age " years old."))
+  (log-user {:name "Ivo" :gender :male :age 22})
+  ; =>
+
+  (for [[x y] '([:a 1] [:b 2] [:c 0])
+        :when (= y 0)]
+    x)
+  ; =>
+
+  (doseq [[key value] {:1 'a :2 'b :3 'c}] (prn key value))
+  ; =>
+
+= Деструктуриране на аргументи
+== за напреднали
+
+Можете да мапнете всички ключове на мап към стойности като ползвате същите имена на променливите
+:annotate
+  (defn log-user [{:keys [name gender age]}] (println name "is" age "years old."))
+  (log-user {:name "Ivo" :gender :male :age 22})
+  ; =>
+
+Добре е да давате дефолтни стойности за тези ключове:
+:annotate
+  (defn log-user [{:keys [name gender age]
+                   :or {name "Anonymous", gender :male, age 15}}]
+    (println name "is" age "years old."))
+
+  (log-user {:name "Monkata"})      ; =>
+
+Можете да пропуснете аргумент когато стойността му няма значение за функцията
+:annotate
+  (defn log-user [{:keys [name _ age]}]
+    (println name " is " age " years old."))
+
+  (defn destruct [[_ b _ d]] (prn b) (prn d) (+ b d))
+
+
+= Деструктуриране на аргументи
+== за напреднали
+
+Можете да запазите и целия аргумент - преди да е деструктуриран
+:code
+  (defn destruct [[a b c :as origin]]
+    (println "The collection" origin "starts with" a b c "."))
+
+Можете да match-нете и призволен брой аргуемнти
+:annotate
+  (defn destruct [[a b c d & tail]] (prn b) (prn d) (prn tail))
+  (destruct (range 10))
+  ; =>
+
+  ; проверява дали даден елемент е част от колекция - различно от contains?
+  (defn has? [[h & tail] item]
+    (and
+      (not= h nil)
+      (or
+        (= h item)
+        (has? tail item))))
+
+  ; дефинициа на факториел по още един начин - забележете деструктурирането [h & t]
+  (defn fact [n]
+    (let [nums (range 1 (inc n)),
+          multiply (fn self [[h & t] result]
+                       (cond
+                         (= h nil) result
+                         :else (self t (* h result))))]
+      (multiply nums 1)))
+
+= Опашка
+
+В Clojure има реализирана опашка - clojure.lang.PersistentQueue
+
+Наивно решение (1):
+:annotate
+ (defn make-queue [] [])
+ (defn push-to-queue [q x] (conj q x))
+ (defn peek-at-queue [q] (first q))
+ (defn pop-from-queue [q] (vec (rest q)))
+ (defn empty-queue? [q] (empty? q))
+
+ - неоптимално от към време и памет
+
+Наивно решение (2):
+:annotate
+  (defn make-queue [] [])
+  (defn empty-queue? [q] (empty? q))
+  (defn push-to-queue [q x] (conj q x))
+  (defn peek-at-queue [q] (first q))
+  (defn pop-from-queue [q] (if (empty-queue? q) [] (subvec q 1)))
+
+ - `subvec` връща подвектор, който пази референция към оригиналния вектор
+ - вектора никога не намалява
+
+
+= Ефективна имплементация
+== Два вектора
+
+:annotate
+  (defn make-queue
+    []
+    {:front nil :back []})
+
+  (defn push-to-queue
+    [{:keys [front back]} item]
+    {:front front :back (conj back item)})
+
+  (defn peek-at-queue
+    [{:keys [front back]}]
+    (first (or front back)))
+
+  (defn pop-from-queue
+    [{:keys [front back]}]
+    (if (seq front)
+      {:front (next front) :back back}
+      {:front (next back) :back []}))
+
+  (defn empty-queue?
+    [{:keys [front back]}]
+    (and (empty? front) (empty? back)))
+
+= Ефективна имплементация
+== Два вектора (2)
+
+* Относително константни операции
+* Добавянето на елемент е константно
+* Вземането на елемент - също
+* Както и местенето от `:back` към `:front`
+* Но целия `front` се пази, което може да е проблем откъм памет
+
+= Ефективна имплементация
+== Вектор и списък
+
+:annotate
+  (defn make-queue
+    []
+    {:front nil :back []})
+
+  (defn push-to-queue
+    [{:keys [front back]} item]
+    {:front front :back (conj back item)})
+
+  (defn peek-at-queue
+    [{:keys [front back]}]
+    (first (or front back)))
+
+  (defn pop-from-queue
+    [{:keys [front back]}]
+    (if (seq front)
+      {:front (next front) :back back}
+      {:front (next (apply list back)) :back []}))
+
+  (defn empty-queue?
+    [{:keys [front back]}]
+    (and (empty? front) (empty? back)))
+
+= Ефективна имплементация
+== Вектор и списък (2)
+
+* Малко по-бавно поради прехвърлянето от вектор към списък
+* По-ефективно откъм памет
+
+=The Reader
+
+Чете код като текст и построява изпълними Clojure структури
+Използва се от REPL, за да изпълнява директно въведения код
+
+Можете да ползвате read-string за да десериализирате Clojure код:
+  :annotate
+  (read-string "(+ 2 2)")         ; =>
+  (read-string "'(1 2 3)")        ; =>
+
+Можете да ползвате pr, prn и pr-str за да сериализирате Clojure код:
+  :annotate
+  (prn (+ 2 2))                   ; =>
+  (pr-str '(1 2 3))               ; =>
+
+  (read-string (pr-str '(1 2 3))) ; =>
