@@ -213,8 +213,9 @@ Koй начин на достъп да ползваме и кога?
 
   ; Можем да използваме конструкция let
   (def vect
-    (for [x (range 1 6) :let [y (+ x 3)
-	                            z (- x 3)]]
+    (for [x (range 1 6)
+          :let [y (+ x 3)
+                z (- x 3)]]
          [x y z]))
 
   vect                             ; =>
@@ -374,11 +375,11 @@ Koй начин на достъп да ползваме и кога?
 
 Наивно решение (1):
 :annotate
- (defn make-queue [] [])
- (defn push-to-queue [q x] (conj q x))
- (defn peek-at-queue [q] (first q))
- (defn pop-from-queue [q] (vec (rest q)))
- (defn empty-queue? [q] (empty? q))
+  (defn make-queue [] [])
+  (defn push-to-queue [q x] (conj q x))
+  (defn peek-at-queue [q] (first q))
+  (defn pop-from-queue [q] (vec (rest q)))
+  (defn empty-queue? [q] (empty? q))
 
  - неоптимално от към време и памет
 
@@ -467,12 +468,12 @@ Koй начин на достъп да ползваме и кога?
 Използва се от REPL, за да изпълнява директно въведения код
 
 Можете да ползвате read-string за да десериализирате Clojure код:
-  :annotate
+:annotate
   (read-string "(+ 2 2)")         ; =>
   (read-string "'(1 2 3)")        ; =>
 
 Можете да ползвате pr, prn и pr-str за да сериализирате Clojure код:
-  :annotate
+:annotate
   (prn (+ 2 2))                   ; =>
   (pr-str '(1 2 3))               ; =>
 
