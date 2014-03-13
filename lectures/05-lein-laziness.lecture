@@ -1,0 +1,521 @@
+= Днес
+
+* Leiningen
+* Интерактивно програмиране
+* Мързеливост
+
+= Конвенции
+
+* Много от вашия код на сайта е лошо подравнен
+* Искаме да спазвате стриктни конвенции
+* Може да ги намерите в GitHub: [gh:bbatsov/clojure-style-guide]
+* Няма да си затворим очите за първото домашно
+* От тук нататък, нарушенията ще струват още повече точки
+* В реда на нещата е кодът ви да работи, но да получите 0 точки заради неспазване на конвенции
+* Няма да коментираме неща, които не спазват конвенциите (освен "Това не спазва конвенциите")
+* Същото важи и за проекта
+
+= Leiningen
+
+* Пръв приятел на Clojure програмиста
+* Най-лесния начин да си инсталирате Clojure
+* В основата си инструмент за стартираране на задачи
+* Има вградени задачи и плъгини за почти всичко
+* Можете да пишете и свои
+
+= Leiningen
+== Задачи
+
+* Създаване на проекти
+* Стартиране на проекти
+* Стартиране на repl
+* Справя се със зависимостите
+* Build и deploy на проекти
+* и още много
+
+= Leiningen
+== project.clj
+
+Kонфигурация на проект:
+:code
+  (defproject sample-app "0.1.0-SNAPSHOT"
+    :description "FIXME: write description"
+    :url "http://example.com/FIXME"
+    :license {:name "Eclipse Public License"
+              :url "http://www.eclipse.org/legal/epl-v10.html"}
+    :dependencies [[org.clojure/clojure "1.5.1"]
+                   [org.clojure/math.numeric-tower "0.0.4"]]
+    :main sample-app.core
+    :target-path "target/%s")
+
+= Leiningen
+== Създаване и стартиране на проект
+
+* `lein new project-name`
+* `lein new app project-name`
+* `app` е шаблон за обикновено приложение
+* `default` шаблона, който се ползва по подразбиране
+* Съществуват много специализирани шаблони
+
+* `lein run` стартира приложението
+
+= Leiningen
+== Repl
+
+* `lein repl`
+* Стартирано в проект ще зареди кода и зависимостите ви
+* Стартира `nRPEL сървър` и `nREPL клиент`
+* Кодът се изпраща от клиента и се изпълнява на сървъра
+* Резултатът се връща на клиента
+* Един nRPEL сървър може да обслужва много клиенти
+
+= Leiningen
+== Repl oriented development
+
+* Не излизаме от REPL
+* Трябва ви редактор с nREPL интеграция (nREPL клиент)
+* Не рестартираме приложението си, а само пращаме за изпълнение още код
+* Правим променти в реално време на приложението докато то работи
+* ...ако се наложи и в production
+* Процеса наричаме интерактивна разработка
+* Ще изискваме от вас да пишете по този начин
+* След време няма да искате да пишете по дървения начин
+
+= Leiningen
+== ROD технологията
+
+* Променливите и функциите са дефиниции (дефинират с `def`)
+* Споменахме, че дефинициите в Clojure са по-скоро указатели към стойности
+* Променяме не съдържанието, а адреса на променливата
+* Като изпратим нов код на nREPL сървъра, предефинираме съществуващите или дефинираме нови дефиниции
+* Възможно е на сървъра да останат дефиниции, които вече не съществуват в кода
+* С `defonce` можем да дефинираме променлива, която няма да се предефинира
+* Това е ползено, когато искаме да запазим голбален стейт
+* Има и други особености, за които ще говорим в нататък курса
+
+= Leiningen
+== Repl workflow
+
+* Пишем парче код
+* Изпълняваме го веднага
+* Тестваме в repl
+* Demo
+
+= Мързеливост
+== ...в този дух мързеше ни да правим салйдове за това
+
+=
+<img src="./05-lein-laziness/bazinga.jpg" />
+
+= Мързеливи колекции
+
+* Елементите им не се изчисляват до момента, в който не ги достъпим
+* Изчисляването на всички елементи наричаме `реализиране` на колекцията
+* Изчислените елементи се кешират и при всеки следващ достъп се ползва кешираната стойност
+* Позволяват ни да представяме безкрайни последователности в иначе ограничената ни памет
+* По-ефективни са от "нетърпеливите" колекции, защото не правят ненужни изчисления
+* Колекциите се итерират веднъж независимо, колко пъти викаме мързеливи транформации върху тях
+* Помагат ни да пишем по-елегантни решения, без да е нужно да му мислим много за производителност
+
+= Мързеливи колекции
+== Примери
+
+Clojure връща мързеливи колекции винаги, когато това е възможно:
+:annotate
+
+  (class (range))                      ; =>
+
+  (class (range 10))                   ; =>
+
+  (class (map inc (range 10)))         ; =>
+
+  (class (filter odd? (range 10)))     ; =>
+
+  (class (remove odd? (range 10)))     ; =>
+
+  (class (drop-while neg? [-1 -2 2]))  ; =>
+
+  (class (partition-all 3 (range 10))) ; =>
+
+  (class (concat [-2 -1] (range 10)))  ; =>
+
+  (class (for [i (range 10)] (* i i))) ; =>
+
+= Реализираме на части
+
+:code
+  (def nums (range 1 50))
+  (defn self [x]
+    (print (str x ", "))
+    x)
+
+  (def same-nums (map self nums))
+  (first same-nums)
+  ;; 1 2 3 4 5 6 ... 32
+
+* Clojure обикновено реализира по 32 елемента от мързелива колекция
+* Прави се с цел ефективност
+* Не разчитайте на това
+
+= `realized?`
+
+:annotate
+  (def all-numbers (range))
+  (def first-10-numbers (range 10))
+
+  (realized? all-numbers)           ; =>
+
+  (vec first-10-numbers)            ; =>
+
+  (realized? first-10-numbers)      ; =>
+
+
+= `cons` vs `conj`
+
+:annotate
+
+  (let [coll (range 1 10)]
+    (cons 0 coll)
+    (realized? coll)) ; =>
+
+  (let [coll (range 1 10)]
+    (conj coll 0)
+    (realized? coll)) ; =>
+
+* `cons` не е нужно оценява колекцията, която му е подадена
+* докато `conj` трябва да знае към каква колекция добавя
+
+= `lazy-seq`
+
+:annotate
+
+  (class (lazy-seq [1 2 3 4])) ; =>
+
+  (defn >=x [x]
+    (lazy-seq (cons x (>=x (inc x)))))
+
+  (take 3 (>=x 10)) ; =>
+
+* Приема израз, който трябва се оцени до последователност или `nil`
+* Връща мързелива колекция, която ще се оцени, когато за пръв път достъпим някой от елементите й
+* Резултата ще се кешира след оценката и ще се използва за всички следващи извиквания
+* `cons` *ще се оцени до колекция, но няма да реализира опашката си*
+
+= `lazy-seq`
+== още един пример
+
+:code
+  (defn map
+    ([f coll]
+     (lazy-seq
+      (when-let [s (seq coll)]
+        (cons (f (first s)) (map f (rest s))))))
+
+= `doall` и `dorun`
+
+Насилствено реализираме цялата последователност
+:annotate
+  (def coll (map inc (range 10)))
+  (doall coll)                    ; =>
+  (realized? coll)                ; =>
+
+  (def coll (map inc (range 10)))
+  (dorun coll)                    ; =>
+  (realized? coll)                ; =>
+
+= Други начини да реализираме колекция
+== малка част
+
+:annotate
+  (def coll (range 10))
+  (count coll)
+  (realized? coll) ; =>
+
+
+  (def coll (range 10))
+  (do (seq coll) (realized? coll))      ; =>
+
+
+  (def coll (range 10))
+  (do (vec coll) (realized? coll))      ; =>
+
+
+  (def coll (range 10))
+  (do (into [] coll) (realized? coll))  ; =>
+
+
+  (def coll (range 10))
+  (do (mapv inc coll) (realized? coll)) ; =>
+
+
+  (def coll (range 10))
+  (do (flatten coll) (realized? coll))  ; =>
+
+= Мързеливост за ефтини елегантни решения
+== решаваме [разпарчетосване](http://fmi.ruby.bg/challenges/5)
+
+Наивно в Ruby
+:code
+    def split_up(coll, length, step, pad)
+      coll.each_slice(step).map { |slice| slice.concat(pad).take(length) }
+    end
+    split_up 1.upto(10), 3, 3, [:a, :b, :c, :d]
+    split_up 1.upto(10), 3, 3, 0.upto(2e6).to_a
+
+В Clojure нямаме проблем
+:code
+  (defn split-up [coll length step pad]
+    (->> coll
+         (partition-all step)
+         (map #(take length (concat % pad)))))
+
+  (split-up (range 10) 3 3 [:a :b :c :d])
+  (split-up (range 10) 3 3 (range 0 2e6))
+
+= Не си губете главата!
+
+Якото на мързеливите поредици е, че няма нужда да държат и смятат всички елементи, а само тези, които ни трябват.
+
+Но! Понякога ако запазим референция към някой предишен елемент, паметта за елементите няма да бъде освободена.
+
+:code
+  (let [r (range 1e9)] [(first r) (last r)])
+  ; [0 999999999]
+
+  (let [r (range 1e9)] [(last r) (first r)])
+  ; java.lang.OutOfMemoryError: GC overhead limit exceeded
+
+= `repeatedly`
+
+Когато искаме да викнем функция безкрайно много пъти пъти, най-често със странични ефекти.
+
+`repeatedly` ни връща безкрайна поредица, `take` връща първите `n` елемента от каквато и да е поредица.
+
+:annotate
+  (defn all-the-randoms [n]
+    (take n (repeatedly #(rand-int 10))))
+
+  (all-the-randoms 5) ;=>
+
+= `iterate`
+
+`iterate` ни връща безкрайна поредица във вида `x, (f x), (f (f x)), ...`
+
+:annotate
+  (take 5 (iterate inc 0))              ; =>
+
+  (take 5 (iterate #(/ % 2) 1048576))   ; =>
+
+  (take 5 (iterate #(str % "NA") "NA")) ; =>
+
+= `delay` & `force`
+== `delay`
+
+Имате две операции: четене на домашно и решаване на домашно, но искаме да решим домашното (което отнема много време). Искаме да се захванем с решаване на домашното само ако след като го прочетем ни се стори ОК.
+
+Но искаме и да имаме по-абстрактно решение.
+
+:code
+  (defn choose-wisely
+    [condition slow-consequence]
+    (if (force condition)
+      (force slow-consequence)
+      false))
+
+  (choose-wisely (delay :looks-good)
+                 (delay (do (Thread/sleep (* 5 24 60 60 1000)) :i-did-it!)))
+  ; :i-did-it!
+
+  (choose-wisely (delay false)
+                 (delay (do (Thread/sleep (* 5 24 60 60 1000)) :i-did-it!)))
+  ; false
+
+= `delay` & `force`
+== алтернатива
+
+Можем да реализираме същото и с функции.
+
+:code
+  (defn choose-wisely
+    [condition slow-consequence]
+    (if (condition)
+      (slow-consequence)
+      false))
+
+  (choose-wisely (constantly :looks-good)
+                 #(do (Thread/sleep (* 5 24 60 60 1000)) :i-did-it!))
+
+= `delay` & `force`
+== leaky алтернатива
+
+Можем да реализираме същото и с функции, но няма да може да проверяваме дали обект е създаден с `delay` с `delay?`.
+
+В нашия пример няма нужда да delay-ваме условието.
+
+:code
+  (defn choose-wisely
+    [condition slow-consequence]
+    (if (if (delay? condition) (force condition) condition)
+      (force slow-consequence)
+      false))
+
+  (choose-wisely :looks-good
+                 (delay (do (Thread/sleep (* 5 24 60 60 1000)) :i-did-it!)))
+
+= qsort
+== бързо и лесно!
+
+* Стар и красив алгоритъм
+* `O(n×log₂(n))` в средния, `O(n²)` в най-лошия случай
+* Все пак в повечето случаи е по-бърз от другите логаритмични
+* Разделяй и владей
+* На всяка стъпка избираме случаен елемент – пивот
+* Намираме всички елементи, които са по-малки от него и ги сортираме със същия алгоритъм
+* Намираме всички елементи, които са по-големи или равни от него и ги сортираме със същия алгоритъм
+* *сортирани по-малки* пивот *сортитани по-големи*
+
+= qsort
+== имплементация
+
+:annotate
+
+  (defn qsort [xs]
+    (if (seq xs)
+      (let [pivot (first xs)
+            smaller? #(< % pivot)
+            xs (rest xs)]
+        (concat
+          (qsort (filter smaller? xs))
+          [pivot]
+          (qsort (remove smaller? xs))))
+      xs))
+
+  (qsort [7 9 -1 3 61 8]) ; =>
+
+= qsort
+== лог
+
+:code
+  (defn qsort [xs]
+    (if (seq xs) (println "qsort" xs))
+    (if (seq xs)
+      (let [pivot (first xs)
+            smaller? #(< % pivot)
+            xs (rest xs)]
+        (concat
+          (qsort (filter smaller? xs))
+          [pivot]
+          (qsort (remove smaller? xs))))
+      xs))
+
+  (qsort [7 9 -1 3 61 8]) ; (-1 3 7 8 9 61)
+
+= qsort
+== лог
+
+{{{
+<pre>
+qsort [7 9 -1 3 61 8]
+pivot 7
+qsort (-1 3)
+pivot -1
+qsort (3)
+pivot 3
+qsort (9 61 8)
+pivot 9
+qsort (8)
+pivot 8
+qsort (61)
+pivot 61
+</pre>
+}}}
+
+= qsort
+== само първите 2
+
+:code
+  (take 2 (qsort [7 9 -1 3 61 8])) ; (-1 3 7 8 9 61)
+
+{{{
+<pre>
+qsort [7 9 -1 3 61 8]
+pivot 7
+qsort (-1 3)
+pivot -1
+qsort (3)
+pivot 3
+qsort (9 61 8)
+pivot 9
+qsort (8)
+pivot 8
+qsort (61)
+pivot 61
+</pre>
+}}}
+
+= qsort
+== lazy
+
+* за да не смятаме всичко ни трябва итеративен алгоритъм
+* ще представим цялата структура във вида: `(поредица) число (поредица) число … (поредица)`
+
+= qsort
+== lazy имплементация
+
+:annotate
+
+  (defn sort-parts [work]
+    (lazy-seq
+      (loop [[part & parts] work]
+        (if-let [[pivot & xs] (seq part)]
+          (letfn [(smaller? [x] (< x pivot))]
+            (recur (list*
+                     (filter smaller? xs)
+                     pivot
+                     (remove smaller? xs)
+                     parts)))
+          (when-let [[x & parts] parts]
+            (cons x (sort-parts parts)))))))
+
+  (defn lazy-qsort [xs]
+    (sort-parts (list xs)))
+
+  (lazy-qsort [7 9 -1 3 61 8]) ; =>
+
+= qsort
+== lazy имплементация
+
+:code
+
+  (defn sort-parts [work]
+    (println "lazy" work)
+    (lazy-seq
+      (loop [[part & parts] work]
+        (println "loop" part parts)
+        (if-let [[pivot & xs] (seq part)]
+          (letfn [(smaller? [x] (< x pivot))]
+            (recur (list*
+                     (filter smaller? xs)
+                     pivot
+                     (remove smaller? xs)
+                     parts)))
+          (when-let [[x & parts] parts]
+            (cons x (sort-parts parts)))))))
+
+  (defn lazy-qsort [xs]
+    (sort-parts (list xs)))
+
+  (lazy-qsort [7 9 -1 3 61 8]) ; [7 9 -1 3 61 8]
+
+= qsort
+== lazy имплементация
+
+:annotate
+  (defn lazy-qsort [[pivot & xs]]
+    (when pivot
+      (let [smaller #(< % pivot)]
+        (lazy-cat (lazy-qsort (filter smaller xs))
+                  [pivot]
+                  (lazy-qsort (remove smaller xs))))))
+
+  (lazy-qsort [7 9 -1 3 61 8]) ; =>

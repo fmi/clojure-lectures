@@ -18,3 +18,7 @@
   title: 04. Абстракции, деструктуриране, опашка
   date: 2014-03-11
   slug: 04-abstraction-destruct-queue
+'05':
+  title: 05. Leiningen, ROD, мързеливост
+  date: 2014-03-13
+  slug: 05-lein-laziness
