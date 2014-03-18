@@ -22,3 +22,7 @@
   title: 05. Leiningen, ROD, мързеливост
   date: 2014-03-13
   slug: 05-lein-laziness
+'06':
+  title: 06. Трансформации на данни
+  date: 2014-03-18
+  slug: 06-data-transformations
