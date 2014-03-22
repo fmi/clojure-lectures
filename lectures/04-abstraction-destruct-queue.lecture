@@ -112,7 +112,7 @@
   (next ['x])                   ; =>
   ; Припомнете си че [] се оценява до true, а nil до false
 
-Разликата между rest и next ще стане още по ясна когато разгледаме мързеливи колекции
+Разликата между `rest` и `next` ще стане още по ясна когато разгледаме мързеливи колекции
 
 Колекциите и техните съставни части са винаги immutable
 :annotate
@@ -177,10 +177,10 @@ Keyword-ите също могат да са функции
   (:name {:name "Hristo" :age 22})        ; =>
 
 Koй начин на достъп да ползваме и кога?
-+ Използвайте keyword-а като функция (консистентно с records)
++ Използвайте `keyword`-а като функция (консистентно с records)
 + Използвайте колекцията като функция
-+ Използвайте get когато не знаете каква колекция обработвате
-+ Използвайте nth когато искате да получите exception за некоректен достъп
++ Използвайте `get` когато не знаете каква колекция обработвате
++ Използвайте `nth` когато искате да получите exception за некоректен достъп
 
 = Стекове
 
@@ -204,14 +204,14 @@ Koй начин на достъп да ползваме и кога?
 :annotate
   (for [x [0 1 2 3 4 5]] (* 2 x))  ; =>
 
-  ; Забележете реда на резултатната колекцията
+  ; Забележете реда на резултатната колекция
   (def coll
     (for [x [0 1 2 3]
           y '(0 1 2 3)]
          (* x y)))
   coll                             ; =>
 
-  ; Забележете реда на резултатната колекцията
+  ; Забележете реда на резултатната колекция
   (def coll
     (for [x (range 2)
           y (range 2)
@@ -279,7 +279,7 @@ Koй начин на достъп да ползваме и кога?
 
 = doseq
 
-Изпълнява функции за резултатните стойности заради странични ефекти (връща nil)
+Изпълнява функции за резултатните стойности заради странични ефекти (връща `nil`)
 :annotate
   (doseq [x [1 2 3] y [1 2 3]] (prn (* x y)))
   ; 1 2 3 2 4 6 3 6 9
@@ -303,11 +303,11 @@ Koй начин на достъп да ползваме и кога?
     (prn b)
     (prn d)
     (+ b d))
-  ; a се байндва на 1-вия елемент от подадената колекция, б - на 2рия и тн
+  ; a се байндва на 1-вия елемент от подадената колекция, b - на 2рия и т.н.
   (destruct (range 10))
   ; =>
 
-  ; деструктуриране на маове
+  ; деструктуриране на мапове
   (defn log-user [{name :name age :age }]
     (println name " is " age " years old."))
   (log-user {:name "Ivo" :gender :male :age 22})
@@ -347,6 +347,26 @@ Koй начин на достъп да ползваме и кога?
 = Деструктуриране на аргументи
 == за напреднали
 
+Ако ключовете не са `keyword`-и, а низове:
+
+:annotate
+  (defn user-info [{:strs [name age location]}]
+    (format "%s is %s years old and lives in %s." name age location))
+
+  (user-info {"name" "Stefan" "age" 28 "location" "Sofia"})
+  ; =>
+
+или символи:
+:annotate
+  (defn user-info [{:syms [name age location]}]
+    (format "%s is %s years old and lives in %s." name age location))
+
+  (user-info {'name "Bill" 'age 42 'location "Massachusetts"})
+  ; =>
+
+= Деструктуриране на аргументи
+== за напреднали
+
 Можете да запазите и целия аргумент - преди да е деструктуриран
 :code
   (defn destruct [[a b c :as origin]]
@@ -382,9 +402,55 @@ Koй начин на достъп да ползваме и кога?
 
 Припомняме: В Clojure можете да overload-вате функции за различен брой аргументи, но не и по техния тип или стойност.
 
+= Деструктуриране на аргументи
+== за pro-та
+
+Нека имаме:
+:code
+  (def user-info ["shefa" 2014 :name "Stefan" :city "Sofia"])
+
+Ако искаме да деструктурираме тази информация със знанията, които имаме до момента, получаваме:
+:code
+  (let [[username account-year & extra-info] user-info
+        {:keys [name city]} (apply hash-map extra-info)]
+    (format "%s is in %s" name city))
+  ; "Stefan is in Sofia"
+
+"поносимо", но в Clojure трудно се задоволяваме с това
+
+:code
+  (let [[username account-year & {:keys [name city]}] user-info]
+    (format "%s is in %s" name city))
+  ; "Stefan is in Sofia"
+
+* възможно е, ако `& var` последователността има четен брой елементи
+* и е съставена от `key, value` двойки
+
+= Деструктуриране на аргументи
+== за pro-та
+
+И черешката на тортата - `keyword` аргументи
+:annotate
+  (defn order
+    [drink & {:keys [size syrup]
+              :or {size "grande"
+                   syrup "hazelnut"}}]
+    (format "You ordered a %s %s with a %s syrup" drink size syrup))
+
+  (order "Latte")                                      ; =>
+  (order "Latte" :syrup "caramel")                     ; =>
+  (order "Espresso" :syrup "Peppermint" :size "venti") ; =>
+  (order "Espresso" 42 43)                             ; =>
+
+* имаме само един задължителен аргумент
+* останалите имат стойност по подразбиране
+* и могат да се подават в произволен ред със съответния си `keyword`
+* останалите аргументи (без `keyword`-и) просто не се match-ват от деструктурирането на `& var`
+
+
 = Опашка
 
-В Clojure има реализирана опашка - clojure.lang.PersistentQueue
+В Clojure има реализирана опашка - `clojure.lang.PersistentQueue`
 
 Наивно решение (1):
 :annotate
@@ -479,18 +545,18 @@ Koй начин на достъп да ползваме и кога?
 Чете код като текст и построява изпълними Clojure структури
 Използва се от REPL, за да изпълнява директно въведения код
 
-Можете да ползвате read-string за да десериализирате Clojure код:
+Можете да ползвате `read-string` за да десериализирате Clojure код:
 :annotate
   (read-string "(+ 2 2)")         ; =>
   (read-string "'(1 2 3)")        ; =>
 
-Можете да ползвате pr, prn и pr-str за да сериализирате Clojure код:
+Можете да ползвате `pr`, `prn` и `pr-str` за да сериализирате Clojure код:
 :annotate
   (prn (+ 2 2))                   ; =>
   (pr-str '(1 2 3))               ; =>
 
   (read-string (pr-str '(1 2 3))) ; =>
-Можете да ползвате eval, за да оцените прочетен така израз:
+Можете да ползвате `eval`, за да оцените прочетен така израз:
 :annotate
   (eval (read-string "(+ 2 2)"))  ; =>
   (eval "(+ 2 2)")                ; =>
