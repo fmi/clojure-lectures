@@ -462,7 +462,15 @@ abs(-1);
     (println "Parsed: " result)
     (println "Parsing failed"))
 
-`when-let` = `when` + `let`
+е еквивалентно на:
+
+:code
+  (let [result (parse input)]
+    (if result
+      (println "Parsed: " result)
+      (println "Parsing failed")))
+
+Аналогично: `when-let` = `when` + `let`
 
 = Вектори
 
