@@ -347,6 +347,26 @@ Koй начин на достъп да ползваме и кога?
 = Деструктуриране на аргументи
 == за напреднали
 
+Ако ключовете не са `keyword`-и, а низове:
+
+:annotate
+  (defn user-info [{:strs [name age location]}]
+    (format "%s is %s years old and lives in %s." name age location))
+
+  (user-info {"name" "Stefan" "age" 28 "location" "Sofia"})
+  ; =>
+
+или символи:
+:annotate
+  (defn user-info [{:syms [name age location]}]
+    (format "%s is %s years old and lives in %s." name age location))
+
+  (user-info {'name "Bill" 'age 42 'location "Massachusetts"})
+  ; =>
+
+= Деструктуриране на аргументи
+== за напреднали
+
 Можете да запазите и целия аргумент - преди да е деструктуриран
 :code
   (defn destruct [[a b c :as origin]]
@@ -381,6 +401,52 @@ Koй начин на достъп да ползваме и кога?
       (multiply nums 1)))
 
 Припомняме: В Clojure можете да overload-вате функции за различен брой аргументи, но не и по техния тип или стойност.
+
+= Деструктуриране на аргументи
+== за pro-та
+
+Нека имаме:
+:code
+  (def user-info ["shefa" 2014 :name "Stefan" :city "Sofia"])
+
+Ако искаме да деструктурираме тази информация със знанията, които имаме до момента, получаваме:
+:code
+  (let [[username account-year & extra-info] user-info
+        {:keys [name city]} (apply hash-map extra-info)]
+    (format "%s is in %s" name city))
+  ; "Stefan is in Sofia"
+
+"поносимо", но в Clojure трудно се задоволяваме с това
+
+:code
+  (let [[username account-year & {:keys [name city]}] user-info]
+    (format "%s is in %s" name city))
+  ; "Stefan is in Sofia"
+
+* възможно е, ако `& var` последователността има четен брой елементи
+* и е съставена от `key, value` двойки
+
+= Деструктуриране на аргументи
+== за pro-та
+
+И черешката на тортата - `keyword` аргументи
+:annotate
+  (defn order
+    [drink & {:keys [size syrup]
+              :or {size "grande"
+                   syrup "hazelnut"}}]
+    (format "You ordered a %s %s with a %s syrup" drink size syrup))
+
+  (order "Latte")                                      ; =>
+  (order "Latte" :syrup "caramel")                     ; =>
+  (order "Espresso" :syrup "Peppermint" :size "venti") ; =>
+  (order "Espresso" 42 43)                             ; =>
+
+* имаме само един задължителен аргумент
+* останалите имат стойност по подразбиране
+* и могат да се подават в произволен ред със съответния си `keyword`
+* останалите аргументи (без `keyword`-и) просто не се match-ват от деструктурирането на `& var`
+
 
 = Опашка
 
