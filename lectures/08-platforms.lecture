@@ -1,0 +1,345 @@
+= Днес
+
+* Clojure върху JVM
+* Clojure -> JAVA
+* JAVA -> Clojure
+* ClojureScript
+
+= Преди това
+
+* На 3-ти април (четвъртък) ще имаме тест на материала до момента
+* Няма да ви даваме нова задача
+* Приготвили сме ви по-интересно предизвикателство
+* Можете да се включите в имплементацията на [2048](http://gabrielecirulli.github.io/2048/)
+
+= Java
+== Какво взема Clojure от Java
+<blockquote>Clojure is fundamentally a hosted language</blockquote>
+
+* garbage collection
+* just-in-time compilation
+* threading
+* exception handling
+* graphics con- texts
+* всякакви други библиотеки и фундаментални типове (като String и тн)
+* interoperability
+* огромно и активно community
+
+
+= Компилиран Clojure код = компилиран Java код
+
+* Няма разлика за една Java функция дали е извикана от Clojure или Java
+
+* Функциите от Clojure се компилират до методи в класове
+
+* defrecord и deftype формите се компилират до класове от Java
+
+* defprotocols генерират на практика Java интерфейси
+
+* Пакетиране и деплойване на компилираните класове (jar, war, ..)
+
+* Clojure реално се компилира (не интерпретира). Забележете - дори REPL-то всъщност компилира Clojure кода до JVM bytecode.
+
+= Ниво на интеграция
+
+* Clojure Strings са всъщност Java strings (no wrappers)
+
+* Clojure nil e Java null
+
+* Clojure регулярните изрази - java.util.regex.Pattern
+
+* Clojure структурите имплементират read-only частта на колекциите от Java
+
+* Clojure функциите са java.lang.Runnable
+
+* Clojure функциите са всъщност method invocations от Java
+
+
+= Използване на Java код в Clojure (interop forms)
+
+:code
+  ClassName                              = ClassName.class
+
+  (ClassName. arg1 arg2 ...)             = new Class Name(arg1, arg2, ..)
+
+  (.methodName object arg1 arg2 ...)     = object.methodName(arg1, arg2, ..)
+
+  (.field object)                        = field.object
+
+  (ClassName/staticMethod arg1 arg2 ...) = ClassName.staticMethod(arg1, arg2, ..)
+
+  ClassName/FIELD                        = ClassName.FIELD
+
+  (set! (.fieldName object) "Bla")       = object.fieldName = "Bla"
+
+= Използване на Java код в Clojure (interop forms)
+== Няколко примера
+
+:annotate
+  (import 'java.net.URL)               ; =>
+  (def cnn (URL. "http://cnn.com"))    ; =>
+  (.getHost cnn)                       ; =>
+  (slurp cnn)                          ; =>
+
+`slurp` е Clojure функция, която връща съдържанието на стрингове, файлове, URL-и и др.
+Реално връща java.io.Reader
+
+Друг пример за използване на Java в Clojure
+:annotate
+  Double/MAX_VALUE                      ; =>
+  (Double/parseDouble "3.1415")         ; =>
+  (class (Double/parseDouble "3.1415")) ; =>
+
+= Използване на Java код в Clojure (interop forms)
+== Формите са съвместими както с Java, така и Clojure функции и форми
+
+:annotate
+  (defn decimal-to-hex [x]
+    (-> x
+      Integer/parseInt
+      (Integer/toString 16)
+      .toUpperCase))
+
+  (decimal-to-hex "255")                 ; =>
+
+
+= Няколко помощни функции (и не само функции)
+
+`class` - връща java.lang.Class на подадения аргумент
+
+`instance?` - Функция, която връща истина ако вторият и аргумент може да бъде представен като инстанция на подадения клас като първи аргумент
+:annotate
+  (instance? String "bla")               ; =>
+
+`doto` - Макрос, който извиква няколко форми една след друга на подаден обект.
+
+:annotate
+  (import 'java.util.ArrayList)
+  (let [alist (ArrayList.)] (.add alist 1)
+    (.add alist 2)
+    (.add alist 3)
+    alist)                                ; =>
+
+  (def l
+    (doto (ArrayList.)
+      (.add 1)
+      (.add 2)
+      (.add 3)
+      (.add 4)))
+  l                                       ; =>
+
+= Exceptions
+== Основи
+
+:code
+  // Java
+  public static Integer asInt (String s) {
+    try {
+      return Integer.parseInt(s);
+    } catch (NumberFormatException e) { e.printStackTrace();
+      return null;
+    } finally {
+      System.out.println("Attempted to parse as integer: " + s);
+    }
+  }
+
+* try
+* catch
+* finally
+* try-with-resources
+
+= Exceptions
+== В Clojure
+
+:code
+  ; Clojure
+  (defn as-int
+    [s]
+    (try
+      (Integer/parseInt s)
+      (catch NumberFormatException e
+        (.printStackTrace e))
+      (finally
+        (println "Attempted to parse as integer: " s))))
+
+:annotate
+  (throw (IllegalStateException. "I don't know what to do!"))   ; =>
+
+  (throw "bla")          ; =>
+
+= Exceptions
+== Видове
+
+В Clojure няма checked exceptions! (и толкова е готино)
+
+Можете да направите това без да имате try/catch блок:
+:code
+  (File/createTempFile "clojureTempFile" ".txt")
+
+В общи линии винаги ще можете да ползвате някой от следните exception-и:
+:code
+ - java.lang.IllegalArgumentException
+ - java.lang.UnsupportedOperationException
+ - java.lang.IllegalStateException
+ - java.io.IOException
+
+
+= Отваряне на try с ресурси
+
+От Java 7 го има в Java и Clojure го позволява:
+
+:code
+  (require '[clojure.java.io :as io])
+
+  (defn append-to [f text]
+   (with-open [w (io/writer f :append true)]
+     (doto w (.write text) .flush)))
+
+= Използване на Clojure код в Java
+
+Нужни са ни три прости неща:
+ * Да заредим самия Clojure код, който искаме да ползваме
+ * Да вземем референции към променливите и функциите, които искаме да ползваме
+ * Да извикаме функциите, към които имаме референции
+
+= Използване на Clojure код в Java
+== Пример
+
+Нека да опитаме да изпозлваме този namespace в Java
+:code
+  (ns com.clojurebook.histogram)
+  (def keywords (map keyword '(a c a d b c a d c d k d a b b b c d e e e f a a a a)))
+
+= Използване на Clojure код в Java
+== Пример
+
+Как да го ползваме в Java
+:code
+  private static IFn requireFn = RT.var("clojure.core", "require").fn();
+  private static IFn randIntFn = RT.var("clojure.core", "rand-int").fn();
+
+  static {
+    requireFn.invoke(Symbol.intern("com.clojurebook.histogram"));
+  }
+
+  private static IFn frequencies = RT.var("clojure.core", "frequencies").fn();
+  private static Object keywords = RT.var("com.clojurebook.histogram", "keywords").deref();
+
+  ...
+
+  public static void main(String[] args) {
+    Map<Keyword, Integer> sampleHistogram =
+      (Map<Keyword, Integer>) frequencies.invoke(keywords);
+    System.out.println("Number of :a keywords in sample histogram:"
+      + sampleHistogram.get(Keyword.intern("a")));
+
+  ...
+
+= ClojureScript
+
+<blockquote>Clojure rocks, JavaScript reaches</blockquote>
+
+* Clojure -> JavaScript
+* Компилаторът е реализиран изцяло на Clojure
+* И тук можем да работим интерактивно
+* Имаме работещи source maps
+* Компилацията е сравнително прозрачна
+* ClojureScript не ни пречи, когато искаме да пишем бърз код
+* Резултатният JavaScript е съвместим с Google Closure компилатора
+
+= Google Closure компилатор
+== едно умно решение
+
+* JavaScript -> JavaScript
+* Прави магии
+* Минифицира кода
+* Маха кода, който не се ползва
+* Оптимизира цялостно приложението
+* Резултатите са впечетляващи
+
+= Google Closure библиотеки
+
+:code
+  (ns examples.core
+    (:require [goog.events :as events]
+              [goog.style :as gstyle])
+    (:import [goog.ui IdGenerator]
+             [goog.events EventType]))
+
+* Може би най-тествания JavaScript код въобще
+* Ползваме системата за модули и зависимости наготово от там
+* Всичко останало също e налично и готово за ползване
+* Това по никакъв начин не ни ограничава да ползваме външни библиотеки
+
+= Clojure vs ClojureScript
+
+* Разликите са малко, където е възможно имаме Clojure семантиката
+* Само една нишка, липсват примитивите за конкурентност
+* Числата, нзовете, регулярните изрази са JavaScript-ските
+* `def` прави обикновени JavaScript променливи
+* Имаме някои особености при макросите
+* Нямаме `doc`
+* Списъкът не е пълен
+
+= Работа с JavaScript обекти
+
+:code
+  (array 1 2 3)        ; JavaScript масив
+  (js-obj "foo" "bar") ; JavaScript обект
+
+   ;; Имаме и литерален синтаксис
+   #js [1 2 3]
+   #js {"foo" "bar"}
+
+  ;; JavaScript обект, който държи ClojureScript вектор. #js е плитък.
+  (def shallow #js {"foo" [1 2 3]})
+
+  ;; Рекурсивно се опитва да трансформира JavaScript и ClojureScript обекти.
+  (js->clj #js [1 #js {3 4}])
+  (clj->js [1 #{2} {3 4} :kw])
+
+= Interop
+
+Имаме същите инструменти както в Java имплементацията:
+:code
+  (.alert js/window "Hello, ClojureScript!")
+
+  ; Достъп до глобални променливи
+  js/$
+  js/document
+  js/document.body.firstChild
+
+  (doto (js/XMLHttpRequest)
+    (.addEventListener "load" #(prn %) false)
+    (.open "get" "http://google.com/" true)
+    (.send)
+    (.abort))
+
+= Как да ползваме CLJS код от JavaScript
+
+:code
+  (defn ^:export init [] (comment ...))
+
+* Както казахме компилацията е сравнително прозрачна
+* ClojureScript функциите се компилират до JavaScript функции
+* `snake.game.start();` е функцията `start` дефинирана в `snake.game` пространството от имена
+* `^:export` ще "маркира" функцията ни като публично API и closure компилатора ще уважи това
+
+= Инструментите
+
++ [lein-cljsbuild](https://github.com/emezeske/lein-cljsbuild) - компилация на cljs
++ [cljx](https://github.com/lynaghk/cljx) - споделяне на код с Clojure
++ [mies](https://github.com/swannodette/mies) - прост lein template за начало
+
+= Ресурси
+
++ Препоръчваме: [https://github.com/magomimmo/modern-cljs]
++ Cheat Sheet: [https://github.com/swannodette/lt-cljs-tutorial]
++ Заигравка с компилатора: [https://github.com/swannodette/hello-cljsc]
++ Официално wiki: [https://github.com/clojure/clojurescript/wiki]
+
+= Killer apps
+
++ [0m](https://github.com/swannodette/om)
++ [Core.async](https://github.com/clojure/core.async)
++ [LightTable](https://github.com/LightTable/LightTable)
