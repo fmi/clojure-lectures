@@ -1,0 +1,829 @@
+= Trivia
+== Transients
+
+:code
+  (def v1 (transient []))
+  (def v2 (-> v1
+              (conj! 1)
+              (conj! 2)
+              (conj! 3)))
+
+  (type v2) ; ???
+  (def v3 (persistent! v2))
+
+  v3        ; ???
+  (type v3) ; ???
+
+  (count v2) ; ???
+
+= Trivia
+== Transients
+
+:annotate
+  (def v1 (transient []))
+  (def v2 (-> v1
+              (conj! 1)
+              (conj! 2)
+              (conj! 3)))
+
+  (type v2) ; =>
+  (def v3 (persistent! v2))
+
+  v3        ; =>
+  (type v3) ; =>
+
+  (count v2) ; =>
+
+= Trivia
+== Java interop
+
+`Math/PI`                           -> `???`
+`(.nextInt rnd)`                    -> `???`
+`(.-data pixels)`                   -> `???`
+`(.. person getAddress getZipCode)` -> `???`
+
+= Trivia
+== Java interop
+
+`Math/PI`                           -> `Math.PI`
+`(.nextInt rnd)`                    -> `rnd.nextInt()`
+`(.-data pixels)`                   -> `pixels.data`
+`(.. person getAddress getZipCode)` -> `person.getAddress().getZipCode()`
+
+= Trivia
+== Числа
+
+:code
+  (inc Long/MAX_VALUE)  ; => ???
+  (inc' Long/MAX_VALUE) ; => ???
+
+  (class 42N)           ; => ???
+  (class 3.14M)         ; => ???
+  (class 22/7)          ; => ???
+
+= Trivia
+== Числа
+
+:annotate
+  (inc Long/MAX_VALUE)  ; =>
+  (inc' Long/MAX_VALUE) ; =>
+
+  (class 42N)           ; =>
+  (class 3.14M)         ; =>
+  (class 22/7)          ; =>
+
+= Именовани пространства
+
+* В Clojure, очевидно, има именовани пространства
+* Всяко едно име е в някакво именовано пространство
+* Например `map` е `clojure.core/map`
+* Има текущо именовано пространство, в което имената нямат нужда да се квалифицират
+* По подразбиране, в REPL-а то е `user`
+* По подразбиране, `user` включва неща от `clojure.core`, `clojure.repl`, `clojure.set` и други
+
+= Именовани пространства
+== Функции/макроси
+
+Ще разгледаме възможностите на Clojure за работа с именовани пространства
+
+= in-ns
+
+* Създава ново именовано пространство
+* В него има единствено имена от `java.lang`
+* Няма да има стандартни неща като `map` и т.н.
+* Ако именованото пространство съществува, то става текущо
+* Променливата `*ns*` държи текущото именовано пространство
+
+= refer
+
+`refer` добавя имената от едно именовано пространство в текущото. Например:
+
+:annotate
+  (in-ns 'lectures.examples.ns1)
+  (def answer 42)
+
+  (in-ns 'lectures.examples.ns2)
+  (clojure.core/refer 'lectures.examples.ns1)
+
+  answer ; =>
+
+= refer
+== :only
+
+`(refer ns :only '())` взема само някои имена от пространство:
+
+:annotate
+  (in-ns 'lectures.examples.ns3)
+  (def foo 1)
+  (def bar 2)
+  (def baz 3)
+
+  (in-ns 'lectures.examples.ns4)
+  (clojure.core/refer 'lectures.examples.ns3
+    :only '(foo bar))
+
+  foo ; =>
+  bar ; =>
+  ; baz го няма
+
+= refer
+== :exclude
+
+`:exclude` е като `:only`, ама наобратно
+
+:annotate
+  (in-ns 'lectures.examples.ns5)
+  (def foo 1)
+  (def bar 2)
+  (def baz 3)
+
+  (in-ns 'lectures.examples.ns6)
+  (clojure.core/refer 'lectures.examples.ns5
+    :exclude '(baz))
+
+  foo ; =>
+  bar ; =>
+  ; baz го няма
+
+= refer
+== :rename
+
+`:rename` ви позволява да преименувате:
+
+:annotate
+  (in-ns 'lectures.examples.ns7)
+  (def foo 1)
+  (def bar 2)
+  (def baz 3)
+
+  (in-ns 'lectures.examples.ns8)
+  (clojure.core/refer 'lectures.examples.ns7
+    :rename '{foo one
+              bar two})
+
+  one ; =>
+  two ; =>
+
+= require
+
+`require` зарежда конкретен модул, който е зад именовано пространство:
+
+:annotate
+  (require 'clojure.set)
+
+  clojure.set/join
+  ; =>
+
+= require
+== :as
+
+`require` може да дава локално име на именовано пространство
+
+:annotate
+  (require '[clojure.set :as s])
+
+  s/join
+  ; =>
+
+= require
+== :refer
+
+`require` + `refer`
+
+:annotate
+  (require '[clojure.set :refer [join]])
+  join
+  ; =>
+
+  (require '[clojure.set :refer :all])
+
+= require
+== съкратени форми
+
+`require` има някои съкратени форми
+
+:annotate
+  (require '(clojure [set :as set]
+                     [string :as str]
+                     test))
+
+  set/join
+  ; =>
+
+  str/join
+  ; =>
+
+= require
+== :verbose
+
+Когато искаме да видим какво става:
+:code
+  (require '[clojure.string :as string] :verbose)
+  ; (clojure.core/in-ns 'user)
+  ; (clojure.core/alias 'string 'clojure.string)
+  ; nil
+
+= require
+== :reload
+
+:code
+  (require 'clojure.string :verbose)
+  ; (clojure.core/load "/clojure/string")
+
+  (require 'clojure.string :verbose)
+  ; nil
+
+  (require 'clojure.string :verbose :reload)
+  ; (clojure.core/load "/clojure/string")
+
+* Ползва се, когато програмираме интерактивно
+* `:reaload-all` ще презареди и всички зависимости
+
+= use
+
+`use` е като `require` и `refer`. Например, `(use 'clojure.set)` е еквивалентно на:
+
+:code
+  (require 'clojure.set)
+  (refer 'clojure.set)
+
+* `use`, както и `:refer :all`, рядко е добра идея
+* Предпочитаме да ползвате `require` + `refer`
+
+= use
+== Допълнителни опции
+
+`use` може да приема опциите на require:
+
+:annotate
+  (use '(clojure [string :only (join) :as str]
+                 [set :exclude (join)]))
+
+  join
+  ; =>
+
+  intersection
+  ; =>
+
+  str/trim
+  ; =>
+
+= import
+
+`import` се ползва за класове и интерфейси (съответно и за неща, направени с `deftype` и `defrecord`).
+:annotate
+  (import 'java.util.Date)
+
+  Date ; =>
+
+  (import '(java.util Arrays
+                      Collections))
+
+  Arrays      ; =>
+  Collections ; =>
+
+= ns
+
+`ns` е форма, която комбинира всички тези неща. Долните два блока са еквивалентни:
+
+:code
+  (in-ns 'examples.ns)
+  (clojure.core/refer 'clojure.core :exclude '[next replace remove])
+  (require '(clojure [string :as string]
+                     [set :as set])
+           '[clojure.java.shell :as sh])
+  (use '(clojure zip xml))
+  (import 'java.util.Date
+          'java.text.SimpleDateFormat
+          '(java.util.concurrent Executors
+                                 LinkedBlockingQueue))
+
+  (ns examples.ns
+    (:refer-clojure :exclude [next replace remove])
+    (:require (clojure [string :as string]
+                       [set :as set])
+              [clojure.java.shell :as sh])
+    (:use (clojure zip xml))
+    (:import java.util.Date
+             java.text.SimpleDateFormat
+             (java.util.concurrent Executors
+                                   LinkedBlockingQueue)))
+
+= declare
+
+`declare` позволява forward reference:
+
+:annotate
+  (declare answer)
+
+  (defn *-answer [x]
+    (* x answer))
+
+  (def answer 42)
+
+  (*-answer 2)
+
+Без него щяхме да имаме грешка при компилация.
+
+= Именовани пространства
+== Практики
+
+* По едно именовано пространство на файл
+* Файловете имат подчертавка, когато името има тире
+* Всеки файл е хубаво да започва с `ns`
+* Не трябва да има циклични зависимости
+* Всичко това може да се види в [gh:fmi/clojure-lectures]
+
+= Именовани пространства
+== Интроспекция
+
+* `(find-ns 'clojure.set)` дава пространството като обект
+* `ns-map`, `ns-publics`, `ns-refers`, `ns-imports`
+* `resolve` и `ns-resolve` търсят символ в именовано пространство
+* `ns-unmap` премахва именовано пространство
+
+= Именовани пространства
+== private неща
+
+`defn-` дефинира частна функция, т.е. такава, която не се вкарва по подразбиране с `refer`.
+
+:annotate
+  (defn public-fact [n]
+    (apply * (range 1 (inc n))))
+
+  (defn- private-fact [n]
+    (apply * (range 1 (inc n))))
+
+  (:private (meta #'private-fact)) ; =>
+  (:private (meta #'public-fact))  ; =>
+
+* `refer` гледа дали променливите имат `:private` метаданни.
+* Няма `def-`, но има `(def ^:private answer 42)`
+
+= defonce
+
+`defonce` е като `def`, ама само ако променливата не съществува
+
+:annotate
+  (defonce answer 42)
+  (defonce answer 60)
+
+  answer ; =>
+
+= Променливи
+
+* Референтен тип в Clojure, по-особен
+* Представлява контейнер, който (1) сочи към една стойност и (2) може да се променя към какво сочи
+* Ползваме го от началото на курса
+* Променлива се достъпва с `(var identifier)`, където identifier е името на променливата.
+* `var` е специална форма
+* Може да вземете стойността на променлива с `deref`
+
+= Променливи
+== Пример
+
+:annotate
+  (def answer 42)
+
+  (def answer-var (var answer))
+
+  (class answer-var) ; =>
+  (deref answer-var) ; =>
+  @answer-var        ; =>
+
+= Променливи
+== Несъществуващи имена
+
+Не можете да вземете променлива от несъществуващо име:
+
+:code
+  (def answer 42)
+
+  (var unexisting)
+  ; CompilerExpection Unable to resolve var: unexisting in this context
+
+= Променливи
+== Reader макрос
+
+Променливите имат reader макрос `#'`, т.е. `(var foo)` e `#'foo`
+
+:annotate
+  (def answer 42)
+
+  (deref #'answer) ; =>
+  @#'answer        ; =>
+
+= Именовани пространства
+
+* Повечето променливи са в именовани пространства.
+* `#'user/foo` например е променливата `foo` в именованото пространство `user`.
+* Символите и ключовите думи също могат да имат именовани простраства: `:foo/bar` и `'foo/bar`
+* Именованите пространства са просто част от името, без специално значение
+* Може да създадете символ/ключова дума с несъществуващо именовано пространство `:unexisting/baba`
+* Това не важи за променливите - всяка променлива трябва да сочи нанякъде.
+
+= Именовани пространства
+== При ключовите думи
+
+Ключовите думи имат макроси, които автоматично добавят текущото наименовано пространство:
+
+:annotate
+  :word  ; =>
+  ::word ; =>
+
+Това се ползва, ако различни модули искат да добавят ключове в един и същи мап, без да си пречат.
+
+Очевидно кода от лекциите се изпълнява в `lectures.sandbox`.
+
+= Променливи
+== Резултата от def
+
+Резултатът от `def`(също `defn` и производни) е нова променлива.
+
+:annotate
+  (def answer 42)
+  ; =>
+
+  @#'lectures.sandbox/answer
+  ; =>
+
+`(def answer 42)` създава нова променлива, която сочи към 42.
+
+= Променливите
+== ...които не са точно променливи
+
+Променливите нямат лексикална област на видимост:
+
+:annotate
+  (def x 80)
+
+  (defn never-do-this []
+    (def x 123)
+    (def y 456)
+    (def x (+ x y))
+    x)
+
+  (never-do-this) ; =>
+  x               ; =>
+
+Това важи и за `defn`, който ползва `def`. С изключение на динамичната област на видимост, променливите се използват за *константни* стойности.
+
+Очевидно е, но *не влагайте* `defn`-ове и `def`-ове.
+
+= Променливи
+== Още малко обобщения
+
+* `#'a` връща въпросната променлива. Всеки път `(var a)` връща една и съща променлива, т.е. `(identical? #'a #'a)` връща `true`.
+* Може да вземете стойността на една променлива с `(deref (var a))`, `@(var a)`, `(deref #'a)` или `@#'a` - всички правят едно и също.
+* Стойността на променлива може да се промени с `alter-var-root`. Това се ползва само откъм метапрограмиране, обаче.
+
+= Метаданни
+== meta/with-meta
+
+Повечето обекти в Clojure могат да имат допълнителни метаданни. Те се добавят с `with-meta` и се вземат с `meta`.
+
+:annotate
+  (def person {:age 33 :name "Jesus"})
+  (def meta-jesus (with-meta person {:version 1 :source "Slides"}))
+
+  (meta meta-jesus)
+  ; =>
+
+  (= person meta-jesus)          ; =>
+  (identical? person meta-jesus) ; =>
+
+Метаданните са ортогонални на сравненето - два обекта могат да имат различни метаданни, но да са равни
+
+= Метаданни
+== Живеят в мапове
+
+* Метаданните са мап с каквото си поискате.
+* Някои от ключовете на мапа имат специален смисъл за компилатора.
+* Други може да ползвате за каквото искате.
+
+= Метаданни
+== Употреба
+
+Употребата на метаданните е много смесена. Може да бъде както служебна, така и потребителска:
+
+* Служебна: type hinting за компилатора
+* Служебна: частни имена в именовани пространства
+* Служебна: динамични променливи
+* Потребителска: източник на данните
+* Потребителска: каквото ви хрумне
+
+= Метаданни
+== Reader макроси
+
+* Имат reader макрос `^`, който дори има по-кратка форма
+* `(with-meta [1 2 3 4] {:baba true})` е още `^{:baba true} [1 2 3 4]`
+* `(def answers ^{:with-meta "yup"} [42 43])` поставя метаданни на вектора
+* `(def ^{:with-meta "yup"} answers [42 43])` поставя метаданни на променливата `#'answers`
+
+= Метаданни
+== Reader макроси (2)
+
+:annotate
+  (def ^{:with-meta "yup"} on-var [1 2 3 4])
+  (def on-vec ^{:with-meta "yup"} [1 2 3 4])
+
+  (meta on-var)    ; =>
+  (meta on-vec)    ; =>
+
+  (meta #'on-var)
+  ; =>
+
+  (meta #'on-vec)
+  ; =>
+
+= Метаданни
+== Кратки форми
+
+* Макросите за метаданни имат и кратки форми
+* `^:foo` е като `{:foo true}`
+* `^"baba"` е като `{:tag "baba"}`
+* `^String` е като `{:tag java.lang.String}`
+
+= Метаданни
+== Кратки форми (2)
+
+:annotate
+  (def bool-meta ^:something [1 2 3 4])
+  (def type-meta ^String [1 2 3 4])
+  (def str-meta ^"hmm" [1 2 3 4])
+
+  (meta bool-meta) ; =>
+  (meta type-meta) ; =>
+  (meta str-meta)  ; =>
+
+= Метаданни
+== Криптичен слайд
+
+Сега нещо объркващо:
+
+* В `(def ^:something foo 42)`, метаданните не отиват на променливата `#'foo`, а на символа `'foo`
+* `def` копира метаданните от символа към променливата
+* Символите могат да имат метаданни, което е причината да не се интернират
+* Разбрахте ли?
+
+= Динамични променливи
+
+* Clojure позволява dynamic scoping на променливите
+* Променливите трябва да имат метаданни `{:dynamic true}`
+* По конвенция се изписват с `*` отпред и отзад - `*in*` и `*math-context*`
+* Последните традиционно се наричат "earmuffs"
+* На български: "ушанки" или "наушници"
+
+= Динамични променливи
+== binding
+
+`binding` може да променя стойностите на динамичните променливи в рамките на един блок:
+
+:annotate
+  (def ^:dynamic *value* 42)
+
+  (defn get-value [] *value*)
+
+  (get-value)             ; =>
+
+  (binding [*value* :foo]
+    (get-value)           ; =>
+    nil)
+
+  (get-value)             ; =>
+
+Взема двойки динамична променлива - стойност и форми.
+Изпълнява формите, подменяйки стойността на динамичните променливи и връща оценката на последната форма.
+
+= Динамични променливи
+== binding и влагане
+
+`binding` пази стойностите в нещо като стек.
+
+:annotate
+  (def ^:dynamic *value* 42)
+
+  (defn get-value [] *value*)
+
+  (binding [*value* :foo]
+    (get-value)             ; =>
+    (binding [*value* :bar]
+      (get-value)           ; =>
+      nil)
+    (get-value)             ; =>
+    nil)
+
+  (get-value)               ; =>
+
+= Динамични променливи
+== Вградени
+
+Clojure има няколко интересни вградени динамични променливи. Нека ги разгледаме.
+
+= `*out*`
+
+`*out*` е стандартния изход. Можем да го предефинираме с `binding`.
+
+:annotate
+  (def buffer (java.io.StringWriter.))
+
+  (binding [*out* buffer]
+    (prn [1 2 3 4]))
+
+  (str buffer) ; =>
+
+По този начин вместо да принтираме в стандартния изход, можем да вземем резултатите от `prn` в низ.
+`binding` променя `*out*` на `buffer`, изпълнява `(prn [1 2 3 4])` и връща предишната стойност на `*out*`. В случая цялото нещо се оценява на `nil`.
+
+= BigDecimal деление
+
+Помните ли проблемите с делението при Big Decimal?
+
+:annotate
+  (/ 1M 3)
+  ; =>
+
+В Java има `MathContext`, който тенденциозно се ползва при всяко деление:
+
+{{{
+<pre>
+new BigDecimal("1").divide(new BigDecimal("3"),
+                           new MathContext(2))
+</pre>
+}}}
+
+= BigDecimal деление
+== `*math-context*`
+
+В Clojure може да ползвате `*math-context*`:
+
+:annotate
+  (/ 1M 3)
+  ; =>
+
+  (binding [*math-context* (java.math.MathContext. 2)]
+    (/ 1M 3) ; =>
+    nil)
+
+  (binding [*math-context* (java.math.MathContext. 5)]
+    (/ 1M 3) ; =>
+    nil)
+
+= with-out-str и with-precision
+
+За последните две неща има и макроси:
+
+:annotate
+  (def output (with-out-str (pr [1 2 3 4])))
+
+  output ; =>
+
+  (with-precision 3
+    (/ 1M 3) ; =>
+    nil)
+
+Нали, за да не пипаме Java класове.
+
+= Динамични променливи
+== set!
+
+Може да ползвате `set!` да променяте стойности на динамични променливи:
+
+:annotate
+  (def ^:dynamic *answer* :unknown)
+
+  (binding [*answer* 42]
+    *answer*            ; =>
+    (set! *answer* 100)
+    *answer*            ; =>
+    nil)
+
+  *answer*              ; =>
+
+= Динамични променливи
+== set! (2)
+
+`set!` работи за последната променлива от стека:
+
+:annotate
+  (def ^:dynamic *answer* :unknown)
+
+  (binding [*answer* 42]
+    (binding [*answer* :foo]
+      (set! *answer* 100)
+      *answer*          ; =>
+      nil)
+
+    *answer*            ; =>
+    nil)
+
+  *answer*              ; =>
+
+= Динамични променливи
+== set! (3)
+
+`set!` не работи за нединамични променливи
+
+:annotate
+  (def answer :unknown)
+
+  (set! answer 42)
+  ; =>
+
+Това не е Scheme.
+
+= Динамични променливи
+== Връщане на стойност
+
+* Засега динамичните променливи изглеждат като начин да подаваме опционални аргументи
+* Може да ги ползваме и за връщане на опционални стойности
+* Например, нека имплементираме `abs`, която опционално казва дали се е наложило да смени знака
+* Ще слага булева стойност на `*negative-arg*` чрез `set!`
+
+= Динамични променливи
+== Връщане на стойност
+
+:annotate
+  (def ^:dynamic *negative-arg*)
+
+  (defn abs [n]
+    (if (neg? n)
+      (do (set! *negative-arg* true)
+          (- n))
+      (do (set! *negative-arg* false)
+          n)))
+
+  (binding [*negative-arg* nil]
+    (abs -42)      ; =>
+    *negative-arg* ; =>
+    nil)
+
+* Уви, имаме проблем
+* Ако `*negative-arg*` няма стойност с `binding`, `set!` хвърля грешка
+
+= thread-bound?
+
+Може да ползвате `thread-bound?` за да проверите дали променливата има стойност с `binding`.
+
+:annotate
+  (def ^:dynamic *answer*)
+
+  (thread-bound? #'*answer*)   ; =>
+
+  (binding [*answer* 42]
+    (thread-bound? #'*answer*) ; =>
+    nil)
+
+= Динамични променливи
+== И различни нишки
+
++ Както си личи от името (`thread-bound?`), `binding` е thread-local
++ За щастие, вградените форми в Clojure вземат това предвид
+
+:annotate
+  (def future-answer
+    (with-precision 2
+      (future (/ 1M 3))))
+
+  @future-answer ; =>
+
+= Динамични променливи
+== Проблеми
+
+Все пак, има някои проблеми:
+
+:annotate
+  (def broken
+    (with-precision 2
+      (map #(/ 1M %) (range 1 10))))
+
+  (pr-str broken)
+  ; =>
+
+  (def working
+    (with-precision 2
+      (mapv #(/ 1M %) (range 1 10))))
+
+  (pr-str working)
+  ; =>
+
+= Динамични променливи
+== Проблеми (2)
+
+* Това се случва, защото `map` е мързелив.
+* Когато анонимната функция тръгне да се оценява, `*math-context*` е загубила стойността си
+* `mapv` няма този проблеми, защото не е мързелив и се се оценява преди да се излезе от `with-precision`
+* Конкретно този проблем може да се реши с `bound-fn`
+
+= Динамични променливи
+== bound-fn
+
+`bound-fn` е като `fn`, но запазва thread-local променливите от когато е извикана.
+
+:annotate
+  (def fixed
+    (with-precision 2
+      (map (bound-fn [n] (/ 1M n)) (range 1 10))))
+
+  fixed
+  ; =>
