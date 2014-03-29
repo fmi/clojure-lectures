@@ -211,6 +211,24 @@ Clojure предпочита да хвърля грешки при overflow. Pyt
 + BigInt
 + long
 
+= identical?
+== Или кога две числа са наистина еднакви
+
+:annotate
+  (identical? 100 100)      ; =>
+
+:annotate
+  (identical? 200 200)      ; =>
+  (identical? 5.42 5.42)    ; =>
+  (identical? 5N (inc 4N))  ; =>
+  (identical? 5/2 5/2)      ; =>
+
+:annotate
+  (identical? 15/3 5)       ; =>
+
+:annotate
+Под JVM идентични са само целите числа в областта между -128 и 127.
+
 = Transients
 == Философски въпрос
 
