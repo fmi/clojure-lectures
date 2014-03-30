@@ -21,7 +21,7 @@
 * threading
 * exception handling
 * graphics con- texts
-* всякакви други библиотеки и фундаментални типове (като String и тн)
+* всякакви други библиотеки и фундаментални типове (като String и т.н.)
 * interoperability
 * огромно и активно community
 
@@ -44,7 +44,7 @@
 
 * Clojure Strings са всъщност Java strings (no wrappers)
 
-* Clojure nil e Java null
+* Clojure nil е Java null
 
 * Clojure регулярните изрази - java.util.regex.Pattern
 
@@ -81,7 +81,7 @@
   (.getHost cnn)                       ; =>
   (slurp cnn)                          ; =>
 
-`slurp` е Clojure функция, която връща съдържанието на стрингове, файлове, URL-и и др.
+`slurp` е Clojure функция, която връща съдържанието на низове, файлове, URL-и и др.
 Реално връща java.io.Reader
 
 Друг пример за използване на Java в Clojure
@@ -133,7 +133,7 @@
 
 :code
   // Java
-  public static Integer asInt (String s) {
+  public static Integer asInt(String s) {
     try {
       return Integer.parseInt(s);
     } catch (NumberFormatException e) { e.printStackTrace();
@@ -205,7 +205,7 @@
 = Използване на Clojure код в Java
 == Пример
 
-Нека да опитаме да изпозлваме този namespace в Java
+Нека да опитаме да използваме този namespace в Java
 :code
   (ns com.clojurebook.histogram)
   (def keywords (map keyword '(a c a d b c a d c d k d a b b b c d e e e f a a a a)))
@@ -255,7 +255,7 @@
 * Минифицира кода
 * Маха кода, който не се ползва
 * Оптимизира цялостно приложението
-* Резултатите са впечетляващи
+* Резултатите са впечатляващи
 
 = Google Closure библиотеки
 
