@@ -257,15 +257,13 @@ abs(-1);
 
 :code
   (let [x 10]
-    (* x x))
+    (* x x))       ; 100
 
   (if true
     (prn "true")
-    (prn "false")) ; true
+    (prn "false")) ; "true"
 
-  (if-fn true
-    (prn "true")
-    (prn "false")) ; true false
+  '(a b c)         ; (a b c)
 
 * По-различни от обикновените форми
 * Реализирани са "магически" (в компилатора)
@@ -508,6 +506,10 @@ abs(-1);
   (nth [1 2 3] 2)                 ; =>
   (nth [1 2 3] 5)                 ; =>
   (nth [1 2 3] 5 "not found")     ; =>
+
+  (get [1 2 3] 2)                 ; =>
+  (get [1 2 3] 5)                 ; =>
+  (get [1 2 3] 5 "not found")     ; =>
 
 = Вектори
 == Добавяне на елементи
