@@ -21,7 +21,7 @@
 * threading
 * exception handling
 * graphics con- texts
-* всякакви други библиотеки и фундаментални типове (като String и тн)
+* всякакви други библиотеки и фундаментални типове (като String и т.н.)
 * interoperability
 * огромно и активно community
 
@@ -38,15 +38,15 @@
 
 * Пакетиране и деплойване на компилираните класове (jar, war, ..)
 
-* Clojure реално се компилира (не интерпретира). Забележете - дори REPL-то всъщност компилира Clojure кода до JVM bytecode.
+* Clojure реално се компилира (не интерпретира). Забележете – дори REPL-то всъщност компилира Clojure кода до JVM bytecode.
 
 = Ниво на интеграция
 
 * Clojure Strings са всъщност Java strings (no wrappers)
 
-* Clojure nil e Java null
+* Clojure nil е Java null
 
-* Clojure регулярните изрази - java.util.regex.Pattern
+* Clojure регулярните изрази – java.util.regex.Pattern
 
 * Clojure структурите имплементират read-only частта на колекциите от Java
 
@@ -81,7 +81,7 @@
   (.getHost cnn)                       ; =>
   (slurp cnn)                          ; =>
 
-`slurp` е Clojure функция, която връща съдържанието на стрингове, файлове, URL-и и др.
+`slurp` е Clojure функция, която връща съдържанието на низове, файлове, URL-и и др.
 Реално връща java.io.Reader
 
 Друг пример за използване на Java в Clojure
@@ -105,13 +105,13 @@
 
 = Няколко помощни функции (и не само функции)
 
-`class` - връща java.lang.Class на подадения аргумент
+`class` – връща java.lang.Class на подадения аргумент
 
-`instance?` - Функция, която връща истина ако вторият и аргумент може да бъде представен като инстанция на подадения клас като първи аргумент
+`instance?` – Функция, която връща истина ако вторият и аргумент може да бъде представен като инстанция на подадения клас като първи аргумент
 :annotate
   (instance? String "bla")               ; =>
 
-`doto` - Макрос, който извиква няколко форми една след друга на подаден обект.
+`doto` – Макрос, който извиква няколко форми една след друга на подаден обект.
 
 :annotate
   (import 'java.util.ArrayList)
@@ -133,7 +133,7 @@
 
 :code
   // Java
-  public static Integer asInt (String s) {
+  public static Integer asInt(String s) {
     try {
       return Integer.parseInt(s);
     } catch (NumberFormatException e) { e.printStackTrace();
@@ -205,7 +205,7 @@
 = Използване на Clojure код в Java
 == Пример
 
-Нека да опитаме да изпозлваме този namespace в Java
+Нека да опитаме да използваме този namespace в Java
 :code
   (ns com.clojurebook.histogram)
   (def keywords (map keyword '(a c a d b c a d c d k d a b b b c d e e e f a a a a)))
@@ -255,7 +255,7 @@
 * Минифицира кода
 * Маха кода, който не се ползва
 * Оптимизира цялостно приложението
-* Резултатите са впечетляващи
+* Резултатите са впечатляващи
 
 = Google Closure библиотеки
 
@@ -327,9 +327,9 @@
 
 = Инструментите
 
-+ [lein-cljsbuild](https://github.com/emezeske/lein-cljsbuild) - компилация на cljs
-+ [cljx](https://github.com/lynaghk/cljx) - споделяне на код с Clojure
-+ [mies](https://github.com/swannodette/mies) - прост lein template за начало
++ [lein-cljsbuild](https://github.com/emezeske/lein-cljsbuild) – компилация на cljs
++ [cljx](https://github.com/lynaghk/cljx) – споделяне на код с Clojure
++ [mies](https://github.com/swannodette/mies) – прост lein template за начало
 
 = Ресурси
 

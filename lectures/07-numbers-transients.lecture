@@ -130,7 +130,7 @@ Clojure предпочита да хвърля грешки при overflow. Pyt
 Учебниците ви лъжат – `float`/`double` не пазят реални числа. Пазят техни рационални приближения.
 
 = double (4)
-== Misusage
+== Misuse
 
 {{{
   <p><strong>Никога</strong> не пазете парични суми в <code>double</code>.</p>
