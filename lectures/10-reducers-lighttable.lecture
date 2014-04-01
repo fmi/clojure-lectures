@@ -1,0 +1,391 @@
+= Днес
+
+* Reducers
+* LightTable
+
+= Преди това
+
+* Искаме да благодарим на всички, които помагат за материалите
+* Днес последно се занимаваме със "скучните неща"
+* Погрижете се основата ви да е добра, за да ви е все така приятно нататък
+* Вече спокойно можете да пиште Clojure приложения
+* Не е зле да започнете да мислите за проекти
+* Нататък ще става все по-интересно - конкурентност, макроси, полиморфизъм, core.async, om
+
+= Reducers
+
+* Нещо интересно, но за сега доста ново и експериментално
+* Още една имплементация на някои от основните трансформации - `map`, `filter`, `reduce`, ...
+* От името им личи, че основно са концентрирани върху концепцията за `reduce`
+* Традиционните имплементации на функции като `map` работят върху няква форма на колекции и връщат колекции
+* Reducer-ите избират алтернативен подход, като работят върху друга абстакция, `редуцираща функция`
+
+= Редуцираща функция
+
+* Функция на 2 аргумента, която може да бъде подадена на `reduce`
+* Операциите като `map`, `filter`, `mapcat`, вместо да трансформират колекцията, трансформират редуциращата функция и връщят `reducibles`
+* Операциите върху колекции, стават опреации върху функции
+* Това ги освобождава от всякаква работа и ги прави доста леки
+* По този начин ги освобождаваме и от отговорността, да знаят каквото и да било за колекцията, която ще се редуцира
+* При този подход разбира се жертваме мързеливостта
+
+= Мапване
+
+Нека видим как трансформираме редуциращата функция `f1`:
+:code
+  (defn mapping [f]
+    (fn [f1]
+      (fn [result input]
+        (f1 result (f input)))))
+
+  (let [t1 (mapping inc)
+        t2 (mapping dec)]
+    (-> +
+       (t2)
+       (t1)))
+
+* Връща функция, която приема редуцираща функция
+* Реализациите на `filter`, `mapcat`, `flatten` и други са доста подобни
+
+= Reducer-и
+
+* Вършат цялта работа
+* Едва тук започваме да работим с колекции
+* Имаме два вида reducers - `reduce` и `fold`
+
+= `reduce`
+
+:annotate
+  (require '[clojure.core.reducers :as r])
+
+  (r/reduce + (range 10))
+  ; =>
+
+  (r/reduce + (r/map inc [1 2 3]))
+  ; =>
+
+  (r/reduce + (r/filter even? (r/map inc (range 10))))
+  ; =>
+
+  (into #{} (r/filter even? (r/map inc [1 1 1 2])))
+  ; =>
+
+* Работи като `clojure.core/reduce`
+* Единствената разлика е, че когато не сме подали начална стойност, такава се изчислява като извикаме подадената функция без аргументи
+* `into` ползва `reduce` отдолу и може да се ползва с `reducers`
+* Както забелязваме разликите в кода с и без reducers са минимални
+
+= `reduce`
+
+Долните две фроми правят едно и също.
+:code
+  (r/reduce + (r/map inc [1 2 3]))
+
+  (reduce (fn [ret x]
+           (+ ret (inc x)))
+   (+)
+   [1 2 3])
+
+= За какво ни е това?
+
+:annotate
+  (defn do-work []
+    (loop [i 0
+           coll (range 100000)]
+      (if (< i 1000)
+        (recur (inc i) (map #(+ i %) coll))
+        (reduce + coll))))
+
+  (with-out-str (time (do-work))) ; =>
+
+= За какво ни е това?
+
+:annotate
+  (require '[clojure.core.reducers :as r])
+  (defn do-work []
+    (loop [i 0
+           coll (range 100000)]
+      (if (< i 1000)
+        (recur (inc i) (r/map #(+ i %) coll))
+        (r/reduce + coll))))
+
+  (with-out-str (time (do-work))) ; =>
+
+* Жертвахме мързеливостта, спечелихме скорост
+
+= `fold`
+== жертваме реда, печелим паралелизъм
+
+* Паралелен `reduce`, когато е възможно
+* За разлика от `reduce` не обхожда колекцията последователно
+* Ползва `reduce` + `combine` страгегия
+* Разделя колекцията на групи, всяка от които се редуцира  с `reducef`, с начална стойност `(combinef)`
+* Резултатите от редуциранията се редуцират с `combinef`
+* `combinef` трябва да е асоциативна и извиката без аргументи трябва да връща няква начална стойност. `(+)` и `(*)` са такива.
+* Можем да задаваме размер на групите, и ако колекцията е по-малка, ще се пусне обикновен `reduce`
+
+= `fold`
+== Примери
+
+:annotate
+  (require '[clojure.core.reducers :as r])
+
+  (r/fold + [1 2 3 4])
+  ; =>
+
+  (r/fold + (r/filter even? (range 10)))
+  ; =>
+
+  (r/fold
+    512
+    (fn combinef
+      ([] 0)
+      ([x y] (+ x y)))
+    (fn reducef
+      ([x y] (+ x y)))
+    [1 2 3 4 5 6 7 8 9 10])
+
++ Можем да използваме само една функция за `reduce-combine`
+
+= Евтиния паралелизъм
+
+:annotate
+  (require '[clojure.core.reducers :as r])
+  (def data (->> #(rand-int 1000)
+                  (repeatedly)
+                  (take 1e6)
+                  (vec)))
+
+  (defn sum [coll] (reduce + 0 coll))
+  (defn psum [coll] (r/fold + coll))
+
+  (with-out-str (time (do (psum data) nil))) ; =>
+  (with-out-str (time (do (sum data) nil)))  ; =>
+
+= Размера на колекцията има значение
+
+:annotate
+  (require '[clojure.core.reducers :as r])
+  (def data (->> #(rand-int 1000) (repeatedly) (take 1e6) (vec)))
+
+  (defn pfrequencies [n coll]
+    (r/fold
+      n
+      (fn combinef
+        ([] {})
+        ([x y] (merge-with + x y)))
+      (fn reducef
+        ([counts x] (merge-with + counts {x 1})))
+      coll))
+
+  (with-out-str (time (do (pfrequencies  10 data) nil)))   ; =>
+  (with-out-str (time (do (pfrequencies 512 data) nil)))   ; =>
+  (with-out-str (time (do (pfrequencies 10000 data) nil))) ; =>
+  (with-out-str (time (do (pfrequencies 1e6 data) nil)))   ; =>
+
+= Внимавайте с мързеливите колекции
+
+:annotate
+  (require '[clojure.core.reducers :as r])
+  (def data (->> #(rand-int 1000) (repeatedly) (take 1e6))) ;; (vec)
+
+  (defn pfrequencies [n coll]
+    (r/fold
+      n
+      (fn combinef
+        ([] {})
+        ([x y] (merge-with + x y)))
+      (fn reducef
+        ([counts x] (merge-with + counts {x 1})))
+      coll))
+
+  (with-out-str (time (do (pfrequencies 512 data) nil)))   ; =>
+
+* `fold` ще мине на нормален `reduce`
+
+= Как да оптимизираме?
+
+Трябва ни нещо, което да оптимизираме:
+:annotate
+  (def data (->> #(rand-int 1000) (repeatedly) (take 1e6) (vec)))
+
+  (defn frequencies
+    [coll]
+    (reduce (fn [counts x]
+              (assoc counts x (inc (get counts x 0))))
+      {} coll))
+
+  (with-out-str (time (do (frequencies data) nil)))   ; =>
+
+= Как да оптимизираме?
+== transients
+
+:annotate
+  (def data (->> #(rand-int 1000) (repeatedly) (take 1e6) (vec)))
+
+  (defn frequencies
+    [coll]
+    (persistent!
+     (reduce (fn [counts x]
+               (assoc! counts x (inc (get counts x 0))))
+       (transient {}) coll)))
+
+  (with-out-str (time (do (frequencies data) nil)))   ; =>
+
+= Как да оптимизираме?
+== reducers
+
+:annotate
+  (require '[clojure.core.reducers :as r])
+  (def data (->> #(rand-int 1000) (repeatedly) (take 1e6) (vec)))
+
+  (defn frequencies
+    [coll]
+    (r/fold
+      (fn combinef
+        ([] {})
+        ([coll1 coll2] (merge-with + coll1 coll2)))
+      (fn reducef
+        [coll x] (assoc coll x (inc (get coll x 0))))
+      coll))
+
+  (with-out-str (time (do (frequencies data) nil)))   ; =>
+
+* Защо комбинирането на transiets и reducers няма да работи?
+
+= LightTable
+
+* Интерактивно IDE
+* Интересен проект, откъдето и да го погледнем
+* Вдъхновен от идеите на [Bret Victor](http://www.youtube.com/watch?v=PUv66718DII)
+* Реализиран с [Node-Webkit](https://github.com/rogerwang/node-webkit), [CodeMirror](http://codemirror.net/), ClojureScript
+* BOT архитектура
+
+= LightTable
+== Водещи принципи
+
+{{{
+<blockquote>Creators need an immediate connection to what they create.</blockquote>
+<p style="text-align: left">Bret Victor</p>
+}}}
+
+= LightTable
+== Водещи принципи
+
+* Резултатите от промените по кода са видими незабавно
+* Документацията е налична по всяко време
+* Редакторът показва всичко, а не само текст
+
+= LightTable
+== Езици и поддръжка
+
+* Clojure
+* ClojureScript
+* HTML/CSS/JavaScript
+* Python
+* Плъгини за Ruby, Markdown, LaTeX, ...
+
+= LightTable
+== Отличителни свойства
+
+* REPL (Inline Evaluation)
+* Inline documentation
+* Connections and client
+* Instarepl
+* Watchers
+* Web browser
+
+= LightTable
+== Demo
+
++ TreeJS
++ Merge sort
+
+Кодът е в Github ([gh:fmi/clojure-examples]).
+
+= BOT (Behavior-Object-Tag) архитектура
+
+* Evented архитектура
+* Искаме да е максимално адаптивна
+* Възможност за runtime конфиргурации
+* Искаме да е възможно най-просто
+
+= BOT
+== Подход
+
+Какво правим, когато решаваме проблем с Clojure?
+
+* DATA IT!
+* После си знаем нашето
+* Така е разбирн и LightTable
+* Цялото IDE е представено с една структура от данни
+* Тази структура не е immutable, постоянно добавяме и махаме неща от там
+* Тези неща в повечето случаи биват 3 типа
+
+= BOT
+== Objects
+
+* Всичко е обект
+* Обекта е просто clojure мап
+* Контейнер, в който се пази стейт
+* Пазят също UI-а (HTML-a) на обекта ако има такъв
+* Имат `:triggers`  - събития, които могат да бътдат изпълнявани върху тях
+* Имат `:behaviors` - неща, които слушат за тези събития
+* Не правят нищо, a очакват нещо друго да направи нещо с тях
+
+= BOT
+== Behaviors (поведения)
+
+* Отново clojure мапове
+* Именовани преизползваеми реакции на събития (event listeners)
+* Съдържат функцията, която се изпълнява при събитието
+* Могат да се ползват от много обекти
+* Често два обекта се различават само по-това как реагират на едно събитие
+* Архитектурата scale-ва с композиция на поведения
+
+= BOT
+== Tags
+
+* Начин за групиране на сходни поведения
+* Закачаме поведения за таговете
+* Закачаме таговете на обктите
+* Обекта получава всички поведения от закачените му тагове
+
+= Bot
+== Commands
+
+* "Глобални" функции
+* Викат се от командния панел
+* Лесен начин да експортваме функционалност
+* Могат да се закачат на клавишни коминации
+
+= BOT
+== Demo
+
++ `User keymap`
++ `User behaviours`
++ intro страница
++ Редактиране на LightTable
+
+= Plugins
+
+* Няма публично API
+* Всичко е примери и догадки
+* Почти по нищо не се различават от кода на LightTable
+* Има [пример](https://github.com/LightTable/Declassifier)
+
+= Plugins
+== Структура
+
+* git хранилище
+* behaviors файл
+* keymap файл
+* ClojureScript код
+* JavaScript код
+* NodeJS модули
+
+= LightTable > IDE
+
+* "Жива" среда с Chromium (webgl, web audio, ...) директно в редактора
+* Принципите са приложими и извън програмирането
+* Работи се по това
