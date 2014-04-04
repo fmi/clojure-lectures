@@ -64,7 +64,7 @@
 
   (.methodName object arg1 arg2 ...)     = object.methodName(arg1, arg2, ..)
 
-  (.field object)                        = field.object
+  (.field object)                        = object.field
 
   (ClassName/staticMethod arg1 arg2 ...) = ClassName.staticMethod(arg1, arg2, ..)
 
