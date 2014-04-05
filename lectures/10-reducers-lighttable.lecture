@@ -170,31 +170,30 @@
 
   (def data (->> #(rand-int 1000) (repeatedly) (take 1e6) (vec)))
 
-  (defn get-processor-cores-count []
-    (.. Runtime
-        getRuntime
-        availableProcessors))
-
   (defn pfrequencies
-    ([coll]
-      (pfrequencies (quot (count coll)
-                          (get-processor-cores-count))
-                    coll))
-    ([n coll]
-      (r/fold
-        n
-        (fn combinef
-          ([] {})
-          ([x y] (merge-with + x y)))
-        (fn reducef
-          ([counts x] (merge-with + counts {x 1})))
-        coll)))
+    [n coll]
+    (r/fold
+      n
+      (fn combinef
+        ([] {})
+        ([x y] (merge-with + x y)))
+      (fn reducef
+        ([counts x] (merge-with + counts {x 1})))
+      coll))
 
   (with-out-str (time (do (pfrequencies  10 data) nil)))   ; =>
   (with-out-str (time (do (pfrequencies 512 data) nil)))   ; =>
   (with-out-str (time (do (pfrequencies 10000 data) nil))) ; =>
   (with-out-str (time (do (pfrequencies 1e6 data) nil)))   ; =>
-  (with-out-str (time (do (pfrequencies data) nil)))       ; =>
+
+  (defn divide-to-cores [coll]
+    (quot (count coll)
+      (.. Runtime
+        getRuntime
+        availableProcessors)))
+
+  (with-out-str (time (do (pfrequencies (divide-to-cores data) data) nil)))
+  ; =>
 
 = Внимавайте с мързеливите колекции
 
@@ -210,21 +209,17 @@
         availableProcessors))
 
   (defn pfrequencies
-    ([coll]
-      (pfrequencies (quot (count coll)
-                          (get-processor-cores-count))
-                    coll))
-    ([n coll]
-      (r/fold
-        n
-        (fn combinef
-          ([] {})
-          ([x y] (merge-with + x y)))
-        (fn reducef
-          ([counts x] (merge-with + counts {x 1})))
-        coll)))
+    [n coll]
+    (r/fold
+      n
+      (fn combinef
+        ([] {})
+        ([x y] (merge-with + x y)))
+      (fn reducef
+        ([counts x] (merge-with + counts {x 1})))
+      coll))
 
-  (with-out-str (time (do (pfrequencies data) nil)))   ; =>
+  (with-out-str (time (do (pfrequencies 512 data) nil)))   ; =>
 
 * `fold` ще мине на нормален `reduce`
 
