@@ -1,0 +1,424 @@
+= Днес
+
++ Макроси
++ Инструменти за работа тях
++ Евентуални проблеми и решенията им
+
+= Какво е това "макро", да го ева?!
+
+{{{<img src="11-macros/nafarforii.jpg" height="80%">}}}
+
+= Преди това
+== Нужни знания
+
+* Хомоиконичност (homoiconicity)
+* Compile time vs. Runtime
+* Оценяване на символи
+
+= Преди това
+== Нужни знания
+
++ *Хомоиконичност (homoiconicity)*
++ Compile time vs. Runtime
++ Оценяване на символи
+
+= Хомоиконичност
+
+{{{<img src="11-macros/homoiconicity.png" width="80%">}}}
+
+= Хомоиконичност
+== С повече думички
+
+* homoiconicity = `homo` (същото) + `icon` (представяне)
+* Кодът се представя със структурите от данни на езика
+* Пишем код използвайки самите структури от данни, които ни дава езикът
+* Кодът е данни, а данните са код
+
+= Извикване на функция
+
+{{{<img src="11-macros/function-call.png" width="80%">}}}
+
+= Дефиниране на функция
+
+{{{<img src="11-macros/defn-data.png" width="70%">}}}
+
+= Дефиниране на функция
+
+{{{<img src="11-macros/defn-semantics.png" width="80%">}}}
+
+= Яката работа! Ама какво от това?!
+
+{{{<img src="11-macros/shocked.jpg" width="80%">}}}
+
+= Хомоиконичност
+== Ползите
+
+* Почти липсва синтаксис
+* Кодът и програмите са лесни за манипулиране
+* Което е добра предпоставка за макроси
+* Което пък е добра предпоставка за метапрограмиране
+
+= Преди това
+== Нужни знания
+
++ Хомоиконичност (homoiconicity)
++ *Compile time vs. Runtime*
++ Оценяване на символи
+
+= Compile time
+
+* Код -> Машинен код
+* Този процес наричаме компилация
+* *Compile time* е времето, през което се случва процесът на компилация
+* Синтактичен и семантичен анализ, проверка на типове, шаблони, code generation, code optimization и др.
+
+= Runtime
+
+* След компилация, приложението може да се стартира от потребител
+* *Runtime* е времето, през което приложението се изпълнява
+
+= Преди това
+== Нужни знания
+
++ Хомоиконичност (homoiconicity)
++ Compile time vs. Runtime
++ *Оценяване на символи*
+
+= Етапи за оценка на символи
+
+Символ се оценява до:
+
++ Стойността към която сочи `var`-а, именована от символа, ако е квалифициран с именовано пространство
++ Java класа, именован от символа, ако е квалифициран с пакет
+
+В противен случай, до първото от следните:
+
++ Специална форма, ако именова такава и трябва да се използва като такава
++ Стойността на локално свързване
++ Стойността на `var`-a в текущото именовано пространство
++ Грешка
+
+= Макроси
+== Общи
+
+* Разширения към компилатора
+* Инструмент за трансформиране на произволна структура от данни до такава, която може да се оцени от Clojure
+* Нови синтактични конструкции
+* Изпълняват се Compile time
+
+= Макроси
+== В Clojure
+
+* Мощна макро система
+* Нищо общо с болезнения препроцесор в C
+* Размита граница между макроси и специални форми
+
+= Макроси
+== Textual macros and preprocessors (C-style)
+
+{{{<img src="11-macros/preprocessors.jpg" height="70%">}}}
+
+= Макроси
+== Compiler plugins (Scala, Haskell, Groovy, ...)
+
+{{{<img src="11-macros/compiler-plugins.png" height="70%">}}}
+
+= Макроси
+== Lisp macros (Clojure, Scheme, ...)
+
+{{{<img src="11-macros/lisp-macros.jpg" height="60%">}}}
+
+= Compilation pipeline
+
+{{{<img src="11-macros/compilation-pipeline.jpg" height="60%">}}}
+
++ [The ClojureScript Compilation Pipeline](http://blog.fogus.me/2012/04/25/the-clojurescript-compilation-pipeline/)
+
+= Compilation model
+
+{{{<img src="11-macros/compilation-model.png" height="60%">}}}
+
++ [Clojure Programming](http://www.clojurebook.com/)
+
+= Compile time vs Runtime
+== Грешки
+
+Compile time грешка
+
+:code
+  (defmacro macro-fail [& body]
+    (assert false (apply str "You are failed with: " body)))
+  ; #'user/macro-fail
+
+  (defn compile-time-fail []
+    (macro-fail "some test data"))
+  ; CompilerException java.lang.AssertionError: Assert failed: You are failed with: some test data
+  ; false, compiling:(NO_SOURCE_PATH:2:5)
+
+= Compile time vs Runtime
+== Грешки
+
+Runtime грешка
+
+:code
+  (defn fn-fail [& body]
+    (assert false (apply str "You are failed with: " body)))
+  ; #'user/fn-fail
+
+  (defn runtime-fail []
+    (fn-fail "some test data"))
+  ; #'user/runtime-fail
+
+  (runtime-fail)
+  ; AssertionError Assert failed: You are failed with: some test data
+  ; false  user/fn-fail (NO_SOURCE_FILE:2)
+
+= Инструменти за работа с макроси
+== Пълен арсенал
+
++ quote
++ syntax quote
++ unqoute
++ unquote-splicing
++ gensym
++ auto-gensym
++ macroexpand-1, macroexpand, macroexpand-all
+
+= Quote
+== Deja vu
+
+:annotate
+  (quote (+ 1 2 3)) ; =>
+  'padme            ; =>
+
+* Вече сте запознати с `quote`
+* Специална форма
+* Връща аргументите си неоценени
+* Има кратък запис - `'`
+* `(quote (a b c))` е еквивалентно на `'(a b c)`
+
+= Пример
+
+:code
+  (defmacro while
+    [test & body]
+    (list 'loop []
+          (concat (list 'when test) body)
+          '(recur)))
+
+* Есенцията на макроса се губи в инцидентна сложност
+
+= Syntax Quote
+== Или Quote на стероиди
+
++ Използва backtick (`), а не апостроф (')
++ Квалифицира напълно символите в текущото именовано пространство
+
+:annotate
+  (def answer 42) ; =>
+  [answer (quote answer) 'answer `answer] ; =>
+
+= Пример
+
+:code
+  (defmacro while
+    [test & body]
+    `(loop []
+       (when ~test
+         ~@body
+         (recur))))
+
+* По-четимо, а?
+* За странните символи - след малко
+
+= Unquote
+== Когато искаме да оценим нещо
+
++ За целта използваме `~` (тилда)
+
+:annotate
+  (def answer 42) ; =>
+
+  `(map println [~answer])           ; =>
+  `(map println ~[answer])           ; =>
+  `(println ~(keyword (str answer))) ; =>
+
+= Unquote-splicing
+== Когато искаме да разпакетираме списък
+
++ За целта използваме `~@`
+
+:annotate
+  (let [defs '((def x 123)
+               (def y 456))]
+    `(do ~@defs))
+  ; =>
+
+= Unquote-splicing
+== Често срещана употреба
+
+:code
+  (defmacro foo
+    [& body]
+    `(do-something ~@body))
+
+  (macroexpand-1 '(foo (doseq [x (range 5)]
+                         (println x))
+                       :done))
+  ; (lectures.core/do-something (doseq [x (range 5)] (println x)) :done)
+
+= Функции vs Макроси
+
+:code
+  (read-string "(+ 1 3 4)")
+  (eval (list + 1 3 4))
+
+  (eval (macro (read-string "(+ 1 3 4)")))
+  (function (eval (read-string "(+ 1 3 4)")))
+
+= Правила
+
+Не използвайте макроси, освен ако се налага да използвате макроси!!!
+
+= Кога да използваме макроси
+
+* Когато не можем да измислим по-добра абстракция
+* Когато в кодът ни има повторения и липса на достатъчно експресивност
+* Когато текущия синтаксис ни ограничава в експресивността на кода
+* Те трябва да са лека обвивка върху съществуващата функционалност, а не да има дебела логика в тях
+
+= Хигиена
+== Проблем
+
+:code
+  (defmacro unhygienic
+    [& body]
+    `(let [x :oops]
+       ~@body))
+
+* Не искаме кодът ни да е в конфликт с останалия код
+* Syntax-quote ни пази
+* Това макро няма да се компилира никога
+
+= Хигиена
+== Наивност
+
+:code
+  (defmacro unhygienic
+    [& body]
+    `(let [~'x :oops]
+       ~@body))
+
+* Сега имаме проблем
+* Кодът ни може да влезе в конлфикт с друг код
+
+= Хигиена
+== Спасението - `gensym`
+
+:code
+  (defmacro hygienic
+    [& body]
+    (let [sym (gensym)]
+      `(let [~sym :macro-value]
+         ~@body)))
+  ; #'user/hygienic
+
+  (let [x :important-value]
+    (hygienic (println "x:" x)))
+  ; x: :important-value
+  ; nil
+
+= Gensym
+
+:annotate
+  (gensym) ; =>
+  (gensym) ; =>
+
+  (gensym "sym") ; =>
+  (gensym "sym") ; =>
+
+* Генерира произволен символ
+* Гаранция за уникалност
+
+= Auto-gensym
+
++ Завършват на `#`
++ Автоматично се expand-ват до `gensym`
++ Всеки път до един и същ символ
+
+:annotate
+  `(x# x#)  ; =>
+  [`x# `x#] ; =>
+
+= Auto-gensym
+
+:code
+  (defmacro hygienic
+    [& body]
+    `(let [x# :macro-value]
+       ~@body))
+
+= Reader макроси
+
+* `, ', ~, ~@, #() и други
+* Не са магически
+* Наричат се Reader макроси
+* Изпълняват се при работата на Reader-a
+* Разширения на Reader-a
+
+= Reader макроси
+== Примери
+
+:annotate
+  (read-string "'answer")
+  ; =>
+
+  (read-string "`(omg zomg wtf)'")
+  ; =>
+
+  (read-string "#(+ %1 %2)")
+  ; =>
+
+= Macroexpand
+
+Demo
+
+= Cond
+
+:code
+  (defmacro cond
+    [& clauses]
+      (when clauses
+        (list 'if (first clauses)
+              (if (next clauses)
+                  (second clauses)
+                  (throw (IllegalArgumentException.
+                           "cond requires an even number of forms")))
+              (cons 'clojure.core/cond (next (next clauses))))))
+
+= ->
+
+:code
+  (defmacro ->
+    ([x] x)
+    ([x form] (if (seq? form)
+                (with-meta `(~(first form) ~x ~@(next form)) (meta form))
+                (list form x)))
+    ([x form & more] `(-> (-> ~x ~form) ~@more)))
+
+= cond->
+
+:code
+  (defmacro cond->
+    [expr & clauses]
+    (assert (even? (count clauses)))
+    (let [g (gensym)
+          pstep (fn [[test step]] `(if ~test (-> ~g ~step) ~g))]
+      `(let [~g ~expr
+             ~@(interleave (repeat g) (map pstep (partition 2 clauses)))]
+         ~g)))
+
+= А сега вие
+
+:code
+  (apply or [nil 42 true false]) ; ???
