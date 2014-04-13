@@ -203,8 +203,9 @@ Runtime грешка
   (defmacro while
     [test & body]
     (list 'loop []
-          (concat (list 'when test) body)
-          '(recur)))
+          (concat (list 'when test)
+                  body
+                  (list '(recur)))))
 
 * Есенцията на макроса се губи в инцидентна сложност
 
