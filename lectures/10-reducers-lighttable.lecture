@@ -88,7 +88,7 @@
 
 = За какво ни е това?
 
-:annotate
+:code
   (defn do-work []
     (loop [i 0
            coll (range 100000)]
@@ -96,11 +96,11 @@
         (recur (inc i) (map #(+ i %) coll))
         (reduce + coll))))
 
-  (with-out-str (time (do-work))) ; =>
+  (with-out-str (time (do-work))) ; Elapsed time: 6494.853553 msecs
 
 = За какво ни е това?
 
-:annotate
+:code
   (require '[clojure.core.reducers :as r])
   (defn do-work []
     (loop [i 0
@@ -109,7 +109,7 @@
         (recur (inc i) (r/map #(+ i %) coll))
         (r/reduce + coll))))
 
-  (with-out-str (time (do-work))) ; =>
+  (with-out-str (time (do-work))) ; Elapsed time: 3627.154284 msecs
 
 * Жертвахме мързеливостта, спечелихме скорост
 
@@ -149,7 +149,7 @@
 
 = Евтиния паралелизъм
 
-:annotate
+:code
   (require '[clojure.core.reducers :as r])
   (def data (->> #(rand-int 1000)
                   (repeatedly)
@@ -159,12 +159,12 @@
   (defn sum [coll] (reduce + 0 coll))
   (defn psum [coll] (r/fold + coll))
 
-  (with-out-str (time (do (psum data) nil))) ; =>
-  (with-out-str (time (do (sum data) nil)))  ; =>
+  (with-out-str (time (do (psum data) nil))) ; Elapsed time: 39.119241 msecs
+  (with-out-str (time (do (sum data) nil)))  ; Elapsed time: 59.017242 msecs
 
 = Размера на колекцията има значение
 
-:annotate
+:code
   (require '[clojure.core.reducers :as r])
   (import 'java.lang.Runtime)
 
@@ -181,10 +181,10 @@
         ([counts x] (merge-with + counts {x 1})))
       coll))
 
-  (with-out-str (time (do (pfrequencies  10 data) nil)))   ; =>
-  (with-out-str (time (do (pfrequencies 512 data) nil)))   ; =>
-  (with-out-str (time (do (pfrequencies 10000 data) nil))) ; =>
-  (with-out-str (time (do (pfrequencies 1e6 data) nil)))   ; =>
+  (with-out-str (time (do (pfrequencies  10 data) nil)))   ; Elapsed time: 1004.070017 msecs
+  (with-out-str (time (do (pfrequencies 512 data) nil)))   ; Elapsed time: 542.928922 msecs
+  (with-out-str (time (do (pfrequencies 10000 data) nil))) ; Elapsed time: 408.127913 msecs
+  (with-out-str (time (do (pfrequencies 1e6 data) nil)))   ; Elapsed time: 1398.329229 msecs
 
   (defn divide-to-cores [coll]
     (quot (count coll)
@@ -193,11 +193,11 @@
         availableProcessors)))
 
   (with-out-str (time (do (pfrequencies (divide-to-cores data) data) nil)))
-  ; =>
+  ; Elapsed time: 357.268938 msecs
 
 = Внимавайте с мързеливите колекции
 
-:annotate
+:code
   (require '[clojure.core.reducers :as r])
   (import 'java.lang.Runtime)
 
@@ -219,14 +219,14 @@
         ([counts x] (merge-with + counts {x 1})))
       coll))
 
-  (with-out-str (time (do (pfrequencies 512 data) nil)))   ; =>
+  (with-out-str (time (do (pfrequencies 512 data) nil))) ; Elapsed time: 2459.908278 msecs
 
 * `fold` ще мине на нормален `reduce`
 
 = Как да оптимизираме?
 
 Трябва ни нещо, което да оптимизираме:
-:annotate
+:code
   (def data (->> #(rand-int 1000) (repeatedly) (take 1e6) (vec)))
 
   (defn frequencies
@@ -235,12 +235,12 @@
               (assoc counts x (inc (get counts x 0))))
       {} coll))
 
-  (with-out-str (time (do (frequencies data) nil)))   ; =>
+  (with-out-str (time (do (frequencies data) nil)))   ; Elapsed time: 1292.881022 msecs
 
 = Как да оптимизираме?
 == transients
 
-:annotate
+:code
   (def data (->> #(rand-int 1000) (repeatedly) (take 1e6) (vec)))
 
   (defn frequencies
@@ -250,12 +250,12 @@
                (assoc! counts x (inc (get counts x 0))))
        (transient {}) coll)))
 
-  (with-out-str (time (do (frequencies data) nil)))   ; =>
+  (with-out-str (time (do (frequencies data) nil)))   ; Elapsed time: 367.800874 msecs
 
 = Как да оптимизираме?
 == reducers
 
-:annotate
+:code
   (require '[clojure.core.reducers :as r])
   (def data (->> #(rand-int 1000) (repeatedly) (take 1e6) (vec)))
 
@@ -269,7 +269,7 @@
         [coll x] (assoc coll x (inc (get coll x 0))))
       coll))
 
-  (with-out-str (time (do (frequencies data) nil)))   ; =>
+  (with-out-str (time (do (frequencies data) nil)))   ; Elapsed time: 424.241215 msecs
 
 * Защо комбинирането на transiets и reducers няма да работи?
 
