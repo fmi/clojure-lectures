@@ -1,0 +1,417 @@
+= Днес
+
+* Асинхронност
+* Core.Async
+
+= Преди това
+
+* Кой не си е избрал проект?
+* Скоро ще имаме дати втори тест и защита
+
+= Синхронни операции
+
+:code
+  (def data (load-json "data.json"))
+  (save-data data)
+
+* Блокират текущата нишка, чакайки определен ресурс да бъде наличен, след което изпълнението продължава
+* Създават определен ред (синхрон) в изпълнението на програмата
+* Четенето и писането в `atom` или `ref` са синхронни операции
+
+= Асинхронни операции
+
+:code
+  (load-json "data.json"
+    (fn [data]
+      (save-data data)))
+
+* Никога не блокират нишката, която ги инициира
+* За всяка такава операция подаваме функция (callback), която да се извика когато ресурса е наличен
+* Не дефинират никакъв ред (синхрон) в изпълнението на програмата, а за това се грижим ние
+* Четенето и писането в `agent` са асинхронни операции
+
+= Защо асинхнронностa е важна?
+
+* Някои системи, като потребителските интерфейси, са асинхронни по естествен начин
+* Някои системи са асинхронни заради ефективността на този подход
+* Имаме ограничен брой нишки, които операционната система поддържа
+* В определени типове приложения ни се налага да имаме много повече конкурентни процеси от броя на тези нишки
+* ...но все пак това не е решението на всичките ни проблеми
+
+= Защо асихнронностa е трудна?
+
+* Синхронизацията на асинхронните процеси е трудна задача
+* Callbacks абстракцията не ни дава никакви инструменти, за да се справим с този проблем
+* Обикновено затъваме в лоши практики и инцидентна сложност (callback hell)
+* В търсене сме на по-добра абстракция
+
+= Пример
+
+:code
+  var isFirstComplete = false;
+  var isSecondComplete = false;
+
+  function onSecondComplete() {
+    // after second
+  };
+
+  fb(function(data) {
+    isFirstComplete = ture;
+
+    // after first
+
+    if (isSecondComplete) {
+      onSecondComplete();
+    }
+  });
+
+  tw(function(data) {
+    isSecondComplete = ture;
+    if (isFirstComplete) {
+      onSecondComplete();
+    }
+  });
+
+* Фрагментираме логиката на програмата на малки части
+* Вкарваме mutable състояния и инцидентна сложност
+* Системата не е никак гъвкава
+
+= `Core.async`
+
+<blockquote>There comes a time in all good programs when components or subsystems must stop communicating directly with one another.</blockquote>
+<p style="text-align: right; padding-right: 20%;">Rich Hickey</p>
+
+* Clojure.core библиотека създадена от Rich Hickey
+* Предлага механизъм за комуникация и синхронизация на конкурентни процеси базиран на канали и съобщения
+* Инцидентно предлага и доста прост начин за писане на конкурентни програми
+* Реализация е на [CSP](http://www.cs.cmu.edu/~crary/819-f09/Hoare78.pdf)
+* Механизма на работа на пръв поглед доста прилича на този с блокиращи опашки
+* Цели да опрости асинхронното програмиране
+* Работи както в Clojure, така и ClojureScript
+
+= Канали
+
+:code
+  (require '[clojure.core.async :as async :refer :all])
+
+  (chan)
+  (chan 10)
+
+  (let [c (chan)]
+    (close! c))
+
+* Можем да мислим за тях като блокиращи опашки на стероиди
+* Могат да имат много производители (пишещи) и консуматори (четящи)
+* Могат да се подават насам-натам (first class са)
+* Можем да записваме в тях всякакви стойности, с изключение на `nil`
+* `close!` затваря канала и подава стойност `nil`, която ще е последната по този канал
+* По подразбиране каналите не се буферират
+
+= Буфери
+
+Блокиращи буфери с фиксиран размер:
+:code
+  (chan)    ; по подразбиране имаме буфер с размер 1
+  (chan 10) ; буфер с размер 10
+
+Не блокиращи буфери:
+:code
+  ;; Изхвърля новите стойности след препълване
+  (chan (dropping-buffer 1))
+
+  ;; Изхвърля старите стойности след препълване
+  (chan (sliding-buffer 1))
+
+* Не можем да имаме безкрайни буфери
+
+= Блокиращи операции с канали
+
+:code
+  (let [c (chan)]
+    (>!! c 3)
+    (prn (* 2 (<!! c))) ; 6
+    (close! c))
+
+* Не са асинхронни
+* Биха могли да блокират текущата нишка
+* С `>!!` пишем, а с `<!!` четем
+* Четенето блокира ако канала е празен
+* Писането блокира ако канала (буфера) е пълен
+
+= Блокиращи операции с канали
+
+:code
+  (let [c (chan )]
+    (thread (prn (* 2 (<!! c)))) ; 6
+    (>!! c 3)
+    (close! c))
+
+* `thread` изпълнява тялото си в нова нишка
+
+= `alts!!`
+
+:code
+  (let [c1 (chan)
+        c2 (chan)]
+    (thread (while true
+              (let [[v ch] (alts!! [c1 c2])]
+                (println "Read" v "from" ch))))
+    (>!! c1 "hi")
+    (>!! c2 "there"))
+
+* Дава ни възможност за четене от няколко канала
+* Връща двойка - канала, от който е прочетено и прочетената стойност
+* Това не е възможно с блокиращи опашки
+
+= `go` блокове
+
+:code
+  (let [c (chan)]
+    (go
+      (>! c 10)
+      (prn (<! c)))) ; 10
+
+* Приличат на `dosync` блоковете по това, че кодът в тях има по-специална семантика
+* Всички блокиращи операции с канали в `go` блок са асинхронни, и се пишат с един удивителен знак
+* Кодът в `go` блоковете се пише в синхронен стил
+* `go` макроса вътрешно пренаписва този код в state машина, която изпълнява операциите асинхронно
+* Кодът им се изпълнява в нишка от ограничения Clojure thread pool
+* Всеки `go` блок връща канал, по който ще бъде пуснат резултата от блока, когато той се изпълни
+
+= Как да мислим за `go` блокове?
+
+* Като за логически нишки
+* Като за евтини нишки, които свободно можем да създаваме в огромни количества
+* "Паркираме" вместо да блокираме системните нишки
+* Това е детайл на ниско ниво, който рядко ни засяга
+* `go` макроса, като компилатор, който автоматично асинхронизира кодът ни
+
+= `go` блокове
+== Пример
+
+:code
+  (let [ch (chan)]
+    (go (while true
+          (let [v (<! ch)]
+            (println "Read: " v))))
+    (go (>! ch "hi")
+        (<! (timeout 5000))
+        (>! ch "there")))
+
+* Асинхронните операции завършват на един удивителен знак, а синхронните - на 2
+* Безкрайните цикли в `go` блок са често срещана практика
+* `timeout` създава канал, на който се затваря след определено време
+* Това е и пример как можем да отложим операция без да блокираме нишка
+
+= `go` блокове
+== Пример
+
+:code
+  (let [ch (chan)]
+    (go
+     (<! (timeout (rand-int 1000)))
+     (>! ch "value"))
+
+    (go
+     (let [[res source] (alts! [ch (timeout 500)])]
+       (if (= source ch)
+         (prn "Value")
+         (prn "Timeout")))))
+
+= `go` макрос
+== Реализация
+
+* Магия с макроси
+* Малък компилатор
+* Парсва кода, прави анализ, генерира AST, прави трансформации, ...
+* Пренаписва кода в state машина
+
+= `go` macro
+== Начален код
+
+:code
+  (fn [c val]
+    (go
+      (<! (timeout (rand-int 100)))
+      (>! c val)))
+
+= `go` macro
+== След macroexpand
+
+:code
+  (fn state-machine
+    ([]
+       (ioc-macros/aset-all! (java.util.concurrent.atomic.AtomicReferenceArray. 6)
+         0 state-machine
+         1 1))
+    ([state_3730]
+       (let
+           [old-frame__2202__auto__ (clojure.lang.Var/getThreadBindingFrame)]
+         (try
+           (clojure.lang.Var/resetThreadBindingFrame
+             (ioc-macros/aget-object state_3730 3))
+           (loop []
+             (let
+                 [result (case (int (ioc-macros/aget-object state_3730 1))
+                           3 (let [inst_3728 (ioc-macros/aget-object state_3730 2)
+                                   state_3730 state_3730]
+                               (ioc-macros/return-chan state_3730 inst_3728))
+                           2 (let [inst_3725 (ioc-macros/aget-object state_3730 2)
+                                   inst_3726 val
+                                   state_3730 (ioc-macros/aset-all! state_3730 5 inst_3725)]
+                               (ioc-macros/put! state_3730 3 c inst_3726))
+                           1 (let [inst_3722 (rand-int 100)
+                                   inst_3723 (timeout inst_3722)
+                                   state_3730 state_3730]
+                               (ioc-macros/take! state_3730 2 inst_3723)))]
+               (if (identical? result :recur)
+                 (recur)
+                 result)))
+           (finally
+             (clojure.lang.Var/resetThreadBindingFrame
+               old-frame__2202__auto__))))))
+
+= Пример
+== Паралелизъм с core.async
+
+:code
+  (let [c1 (go (<! (timeout (rand-int 1000)))
+             1)
+      c2 (go (<! (timeout (rand-int 1000)))
+             2)]
+  (go (let [v1 (<! c1)
+            v2 (<! c2)]
+        (prn (+ v1 v2)))))
+
+= Обработка на HTTP заявки
+== Синхронно
+
+:code
+  (let [http (chan)]
+    (loop [[request response] (<!! http)]
+      (thread
+        (let [body (load-file (:file request))]
+          (>!! response {:status 200
+                         :body body})))
+      (recur (<!! http))))
+
+= Обработка на HTTP заявки
+== Асинхронно
+
+:code
+  (let [http (chan)]
+    (loop [[request response] (<! http)]
+      (go
+        (let [body (load-file-ch (:file request))]
+          (>! response {:status 200
+                        :body (<! body)})))
+      (recur (<! http))))
+
+= Синхронизация на конкурентни процеси
+
+:code
+  (def c (chan))
+
+  (go (while true (<! (timeout 250)) (>! c 1)))
+  (go (while true (<! (timeout 1000)) (>! c 2)))
+  (go (while true (<! (timeout 1500)) (>! c 3)))
+
+  (go (loop []
+        (let [val (<! c)]
+          (prn val))
+        (recur)))
+
+* Виждаме как каналът се явява комуникационна точка между конкурентните процеси
+* Самата синхронизация се осъществява посредством канала и без видими признаци на mutability
+* Нямаме споделена памет между конкурентните процеси процесите
+
+= Създаване на автономни подсистеми
+
+:code
+  (defn subsystem
+    [out]
+    (let [c (chan)]
+      (go (while true (<! (timeout 250)) (>! c 1)))
+      (go (while true (<! (timeout 1000)) (>! c 2)))
+      (go (while true (<! (timeout 1500)) (>! c 3)))
+
+      (go (loop []
+            (let [val (<! c)]
+              ;; Process val
+              (>! out val))
+            (recur)))))
+
+* Направихме си локален event loop за нашата локална подсистема
+* Комуникацията на подсистемата с останалите подсистеми е напълно индиректна (с канал)
+* Можем да разсъждавамe за тази подсистема като нещо автономно
+
+= Работа със съществуващи API-та
+
+:code
+  (defn listen [el type]
+    (let [c (chan)]
+      (events/listen el type #(put! c %))
+      c))
+
+* `put!` е еквивалентно на `(go (>! ..))`
+* Friends don't let friends put logic in handlers
+
+= Създаване на UI
+== Подкомпонент
+
+:code
+  (defn todo-item
+    [out]
+    {:text "Clojure project"
+     :created_at "Tue May 20 2014 03:11:46"
+     :on-edit #(put! out [:delete %])
+     :on-delete #(put! out [:edit %])})
+
+* Нека `todo-item` създава прост UI компонент
+* `on-edit` и `on-delete` слушат за събития
+* `out` е канал по-който пускаме всички настъпили събития
+
+= Създаване на UI
+== Синхнронизация
+
+:code
+  (defn todo-list
+    []
+    (let [ch (chan)
+          data (atom {:items [(todo-item ch)
+                              (todo-item ch)
+                              (todo-item ch)]})]
+      (go (loop []
+            (let [[action item] (<! ch)]
+              (case action
+                :create
+                (swap! data conj :items item)
+
+                :edit
+                (swap! data ...)
+
+                :delete
+                (swap! data ...)))
+              (recur)))
+      ch))
+
+  (def list (todo-list))
+  (put! list [:create (todo-item)])
+
+* Отново създадохме автономна подсистема
+* Комуникацията в системата ни се осъществява само с канали
+* Цялата логика е на едно място вместо пръсната по callbacks
+
+= Добри практики
+
+* Не слагайте блокиращи операции в `go` блокове
+* Кодът в `go` блок е по-бавен
+* Не слагайте много и сложен код в `go` блок
+* Внимавайте за `deadlocks`
+
+= Ресурси
+
+* [Clojure core.async](http://www.infoq.com/presentations/clojure-core-async)
+* [Go Macro Internals](https://www.youtube.com/watch?v=R3PZMIwXN_g)
+* [Communicating sequential processes](http://swannodette.github.io/2013/07/12/communicating-sequential-processes/)
+* [Parallel processing with core.async](http://stuartsierra.com/2013/12/08/parallel-processing-with-core-async)

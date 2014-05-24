@@ -47,6 +47,10 @@
   date: 2014-04-10
   slug: 11-macros
 '13':
-  title: 13. Конкурентност 
+  title: 13. Конкурентност
   date: 2014-04-17
   slug: 13-concurrency
+'14':
+  title: 14. Core.async
+  date: 2014-05-20
+  slug: 14-core-async
