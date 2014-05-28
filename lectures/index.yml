@@ -54,3 +54,11 @@
   title: 14. Core.async
   date: 2014-05-20
   slug: 14-core-async
+'15':
+  title: 15. Defrecord и протоколи
+  date: 2014-05-27
+  slug: 15-defrecord-protocols
+'16':
+  title: 16. Още протоколи и мултиметоди
+  date: 2014-06-03
+  slug: 16-protocols-multimethods

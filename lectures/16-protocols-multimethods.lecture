@@ -1,0 +1,358 @@
+= Днес
+
+* типове
+* имплементиране на clojure-ските абстракции
+* мултиметоди
+
+= `deftype`
+
+* Low-level
+* Само с `(.x point)`
+* Няма value семантика
+* Mutable fields
+
+= `deftype`
+== Пример
+
+:annotate
+  (deftype SchrödingerCat [^:unsynchronized-mutable state]
+   clojure.lang.IDeref
+   (deref [sc]
+    (locking sc
+     (or state
+      (set! state (if (zero? (rand-int 2))
+                   :dead
+                   :alive))))))
+
+  (defn schrödinger-cat
+   "Creates a new Schrödinger's cat. Beware, the REPL may kill it!"
+   []
+   (SchrödingerCat. nil))
+
+  (def felix (schrödinger-cat))
+  @felix                          ; =>
+  (schrödinger-cat)               ; =>
+  (schrödinger-cat)               ; =>
+
+= Имплементация на абстракциите в Clojure
+
+* „Просто“ имплементираме правилния интерфейс
+* Още не са направени на протоколи
+* [http://clojureatlas.com/](http://clojureatlas.com/)
+* Или `scaffold`
+
+= scaffold
+
+:code
+
+  (defn scaffold
+   "Given an interface, returns a 'hollow' body suitable for use with `deftype`." [interface]
+   (doseq [[iface methods] (->> interface
+                            .getMethods
+                            (map #(vector (.getName (.getDeclaringClass %))
+                                   (symbol (.getName %))
+                                   (count (.getParameterTypes %)))) (group-by first))]
+    (println (str " " iface))
+    (doseq [[_ name argcount] methods]
+     (println
+      (str " "
+       (list name (into '[this] (take argcount (repeatedly gensym)))))))))
+
+= Прост пример: обект, който брои двойно
+
+:annotate
+
+  (deftype DoubleCounter [coll]
+    clojure.lang.Counted
+    (count [this] (* 2 (loop [xs (.coll this) l 0]
+                          (if (seq xs)
+                            (recur (rest xs) (inc l))
+                            l)))))
+
+  (count (DoubleCounter. [1 2 3])) ; =>
+
+= По-сложни типове
+
+* `(scaffold clojure.lang.IPersistentSet)`
+* `(scaffold clojure.lang.IPersistentMap)`
+* Трябва да дефинираме доста неща :-)
+* Трябва да ползваме `deftype`, защото класът от `defrecord` имплементира доста от интерфейсите
+
+= Въпроси към вас?
+
+* Каква ви дава `defrecord`?
+* Какво ви дава `deftype` и каква е разликата му с `defrecord`?
+* Обяснете как работят протоколите?
+
+= Да си припомним `defrecord`
+
+* Дефинираме полета предварително
+* Отива до Java class (бърз достъп до полетата)
+* Участва в асоциативната абстракция
+* Инстанциите са със семантика на стойности – можем да ги сравняваме, отпечатват се ОК, могат да са ключове на мап
+* Можем да добавяме полета (достъпват се по-бавно)
+* Можем да махаме полета (ако са задължителни получаваме мап)
+* Конструктори: `->Record`, `map->Record`
+
+= Да си припомним `deftype`
+
+* Дефинираме полета предварително
+* Отива до Java class (бърз достъп до полетата)
+* Не участва в никакви абстракции
+* Дава ни опция за mutable полета (само за експерти!)
+* Конструктор: `->TypeName`
+
+= Да си припомним `defprotocol`
+
+* Дефинира протокол, представляващ един клас и N функции
+* Различни типове могат да го имплементират с `extend-type`, `extend-protocol` или `extend`
+* Със същите пособи могат да се имплементират и интерфейси
+* Функциите избират имплементацията посредством типа на първият им аргумент
+* Това се нарича dynamic dispatch (single dispatch) в по-класическите езици
+
+= Мултиметоди
+
+* Протоколите ни дават dispatch само по типа на първия аргумент
+* Това още се нарича single dispatch
+* Ако искаме метода да се избира от типа на няколко аргумента, това се нарича multi dispatch
+* В по-тромави ООП езици, това се постига с Visitor Design Pattern
+* В Clojure има мултиметоди
+
+= Мултиметоди
+== Пример с протоколи
+
+:annotate
+  (defprotocol Describeable
+    (describe [this who]))
+
+  (extend-protocol Describeable nil
+    (describe [this who] (str who " says it's nil")))
+
+  (extend-protocol Describeable String
+    (describe [this who] (str who " says it's a string: " this)))
+
+  (extend-protocol Describeable Long
+    (describe [this who] (str who " says it's a number: " this)))
+
+  (describe nil "John") ; =>
+  (describe 42  "Paul") ; =>
+  (describe "A" "Jack") ; =>
+
+= Мултиметоди
+== Същото, ама с тях
+
+:annotate
+  (defmulti describe
+    #(-> %& first type))
+
+  (defmethod describe nil
+    [obj who]
+    (str who " says it's nil"))
+
+  (defmethod describe String
+    [obj who]
+    (str who " says it's a string: " obj))
+
+  (defmethod describe Long
+    [obj who]
+    (str who " says it's a number: " obj))
+
+  (describe nil "John") ; =>
+  (describe 42  "Paul") ; =>
+  (describe "A" "Jack") ; =>
+
+= Мултиметоди
+
+* Дефинират се с `(defmulti name dispatch-fn)`
+* Всеки вариант се дефинира с `(defmethod name dispatch-val [args] ...)`
+* `dispatch-fn` се изпълнява върху аргументите и се вика метода с подходящия `dispatch-val`.
+* Поддържаното arity е ако arity-то на `dispatch-fn`
+
+= Мултиметоди
+== double dispatch
+
+:annotate
+  (defmulti poke #(map type %&))
+
+  (defmethod poke [Long Long]
+    [_ _]
+    "Two longs")
+  (defmethod poke [String Long]
+    [_ _]
+    "A string and a long")
+  (defmethod poke [Long String]
+    [l s]
+    (poke s l))
+  (defmethod poke [String String]
+    [_ _]
+    "Two strings")
+
+  (poke 10 20)       ; =>
+  (poke 10 "Baba")   ; =>
+  (poke "foo" "bar") ; =>
+
+= Мултиметоди
+== default
+
+`:default` задава dispatch по подразбиране.
+
+:annotate
+  (defmulti poke
+    #(map type %&)
+    :default nil)
+
+  (defmethod poke nil
+    [_ _]
+    "No clue")
+
+  (defmethod poke [Long Long]
+    [_ _]
+    "Two longs")
+
+  (poke 42 42) ; =>
+  (poke [] []) ; =>
+
+= defmulti
+== defonce
+
+`defmulti` е реализиран с `defonce`. Това ще рече, ако презаредим следния код, променяйки dispatch функцията, това няма да има ефект:
+
+:annotate
+  (defn poke-dispatch
+    [first second]
+    (type first))
+
+  (defmulti poke
+    poke-dispatch)
+
+= defmulti
+== defonce (2)
+
+Проблемът може да се реши като ползваме променлива:
+
+:annotate
+  (defn poke-dispatch
+    [first second]
+    (type first))
+
+  (defmulti poke
+    #'poke-dispatch)
+
+= type и class
+
+`type` връща що-годе каквото `class`, освен ако няма метаданни `:type`
+
+:annotate
+  (class {}) ; =>
+  (type {})  ; =>
+
+  (class ^{:type :a-tag} {}) ; =>
+  (type ^{:type :a-tag} {})  ; =>
+
+= Мултиметоди
+== Йерархии
+
+* Dispatch стойностите не се проверяват с `=`, а с `isa?`.
+* `(isa? child parent)` връща дали две неща са родител и дете в йерархията
+* В йерархията участват Java класове и ключови думи
+* Йерархията може да се разширява с `(derive child parent)`
+* `isa?` работи и с вектори
+
+= Йерархии
+
+:annotate
+  (isa? Long Object) ; =>
+  (isa? Object Long) ; =>
+
+  (isa? [Long String] [Object Object]) ; =>
+
+  (isa? ::some ::other) ; =>
+
+  (derive ::foo ::bar)
+  (isa? ::foo ::bar) ; =>
+
+  (derive Object ::interesting)
+  (isa? Object ::interesting) ; =>
+
+= Йерархии
+== Създаване
+
+Може да създавате собствени йерархии:
+
+:annotate
+  (def shapes (-> (make-hierarchy)
+                  (derive ::rectangle ::shape)
+                  (derive ::ellipse   ::shape)
+                  (derive ::square    ::rectangle)
+                  (derive ::circle    ::ellipse)))
+
+  (isa? shapes ::circle ::shape)     ; =>
+  (isa? shapes ::circle ::rectangle) ; =>
+  (isa? shapes ::square ::rectangle) ; =>
+
+= Йерархии
+== Интроспекция
+
+* `underive` се сещате какво прави
+* `(parents tag)` връща всички преки родители на `tag`
+* `(ancestors tag)` връща всички непреки родители на `tag`
+* `(descendants tag)` връща всички наследници на `tag`
+
+= Йерархии
+== Множествено наследяване
+
+Може да моделирате множествено наследяване с йерархиите:
+
+:annotate
+  (def diamond (-> (make-hierarchy)
+                   (derive ::left  ::root)
+                   (derive ::right ::root)
+                   (derive ::child ::left)
+                   (derive ::child ::right)))
+
+  (isa? diamond ::child ::root)  ; =>
+  (isa? diamond ::child ::left)  ; =>
+  (isa? diamond ::child ::right) ; =>
+
+= Мултиметоди
+== Множествено наследяване
+
+Имате стандартния проблем:
+
+:annotate
+  (def diamond (-> (make-hierarchy)
+                   (derive ::left  ::root)
+                   (derive ::right ::root)
+                   (derive ::child ::left)
+                   (derive ::child ::right)))
+
+  (defmulti poke identity :hierarchy #'diamond)
+  (defmethod poke ::root [_] "Root")
+  (defmethod poke ::left [_] "Left")
+  (defmethod poke ::right [_] "Right")
+
+  (poke ::left) ; =>
+  (poke ::right) ; =>
+  (poke ::child)
+  ; =>
+
+= Мултиметоди
+== prefer-method
+
+Можете да го решите с prefer-method:
+
+:annotate
+  (def diamond (-> (make-hierarchy)
+                   (derive ::left  ::root)
+                   (derive ::right ::root)
+                   (derive ::child ::left)
+                   (derive ::child ::right)))
+
+  (defmulti poke identity :hierarchy #'diamond)
+  (defmethod poke ::root [_] "Root")
+  (defmethod poke ::left [_] "Left")
+  (defmethod poke ::right [_] "Right")
+
+  (prefer-method poke ::left ::right)
+
+  (poke ::child) ; =>
