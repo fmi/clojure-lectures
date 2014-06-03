@@ -1,0 +1,158 @@
+= Днес
+
+* User Interface в Clojure
+* Seesaw
+
+= Seesaw
+
+`Seesaw is a library/DSL for constructing user interfaces in Clojure. It happens to be built on Swing, but please don't hold that against it.`
+
+* Seesaw е библиотека/DSL за създаване на потребителски интерфейс в Clojure
+* Базиран на Swing
+
+= Защо Seesaw
+
+* Това използва Clojure къмюнитито
+* Изключително мощен и лесен за употреба
+* Не изисква познания за Swing
+* Добра документация
+
+= Project Setup
+
+:code
+  (defproject hello-seesaw "1.0.0-SNAPSHOT"
+    :description "FIXME: write"
+    :dependencies [[org.clojure/clojure "1.4.0"]
+                   [seesaw "x.y.z"]])
+
+* Стандартно, както при всяка Clojure библиотека в leiningen проект
+* Добавяме seesaw като зависимост в `project.clj`
+
+= Frames
+
+:code
+  (frame :title "Sample seesaw frame",
+         :on-close :exit,
+         :size [640 :by 480],
+         :content "I'm a sample seesaw frame!")
+
+* Както в едно типично swing приложение, всичко е "набутано" в рамка
+* Прозорец с рамка и декорация предоставени от операционната система
+* Създава се с функцията `(frame)`
+* Приема множество параметри
+
+= Frames - видимост
+
+:code
+  (->
+    (frame :title "Sample seesaw frame")
+    pack!
+    show!)
+
+* `(frame)` връща невидима (скрита) рамка
+* За да се визуализира тя трябва да бъде подадена на `(show!)`
+* За да се оразмери автоматично спрямо съдържанието може да бъде подадена на `(pack!)`
+* Идиоматично това става по горепосочения начин
+
+= Widgets
+
+:code
+  (vertical-panel :items ["This" "is" "a" "vertical" "stack of" "Labels"])
+
+* Напрактика Swing компоненти
+* Компоненти на потребителския интерфейс, които се показват на екрана
+* Seesaw включва протокол `MakeWidget` за създаване на уиджети от произволни обекти
+* Той се извиква на стойността на `:items` подадена на контеинера
+* Например за създаване на лейбъли трябва просто да подадем стрингове
+* `vertical-panel` е контейнер
+* Повече за тях след малко
+
+= Widgets - опции
+
+:code
+
+  user=> (use 'seesaw.core)
+  nil
+  user=> (use 'seesaw.dev)
+  nil
+  user=> (show-options (label))
+  javax.swing.JLabel
+                      Option  Notes/Examples
+  --------------------------  --------------
+                      :background  :aliceblue
+                                   "#f00"
+                                   "#FF0000"
+                                   (seesaw.color/color 255 0 0 0 224)
+                      :border      5
+                                   "Border Title"
+                                   [5 "Compound" 10]
+                                   See (seesaw.border/*)
+                      :bounds      :preferred
+                                   [x y w h]
+                                   Use :* to leave component unchanged:
+                                   [x :* :* h]
+
+* Доста на брой
+* Могат да бъдат разгледани с `(seesaw.dev/show-options)`
+
+= Widgets - манипулации
+
+:code
+  (config! (select root [:#my-widget]) :enabled? false :text "I'm disabled.")
+
+  (config (select root [:#my-widget]) :enabled?)
+  => false
+
+* Манипулация на опциите на вече създаден widget става с `(seesaw.core/config!)`
+* Текущото състояние на дадена опция може да бъде взето с `(clojure.core/config)`
+
+= Контейери
+
+* Държат в себе си widget-и, подадени най-често с `:items`
+* Има редица функции за тяхното създаване
+* Напрактика създават инстанция на `JPanel` с определена подредба
+* `(flow-panel)`, `(grid-panel)`, `(border-panel)`, `(vertical-panel)`, `(horizontal-panel)`
+
+= Слушане за събития
+
+:code
+  (listen p
+    :mouse-clicked (fn [e] ... do something ...)
+    :mouse-entered (fn [e] ... do something ...)
+    :mouse-exited  (fn [e] ... do something ...))
+
+* Изключително лесно
+* За събития се слуша чрез функцията `(listen)`:
+* Могат да бъдат подавани и на `:listen` при конструиране на обекта
+
+= Поддържани събития
+
+:code
+  user=> (show-events (label))
+  :component [java.awt.event.ComponentListener]
+    :component-hidden
+    :component-moved
+    :component-resized
+    :component-shown
+  :focus [java.awt.event.FocusListener]
+    :focus-gained
+    :focus-lost
+  :key [java.awt.event.KeyListener]
+    :key-pressed
+    :key-released
+    :key-typed
+  :mouse [java.awt.event.MouseListener]
+    :mouse-clicked
+    :mouse-entered
+    :mouse-exited
+    :mouse-pressed
+    :mouse-released
+  :mouse-motion [java.awt.event.MouseMotionListener]
+    :mouse-dragged
+    :mouse-moved
+  :mouse-wheel [java.awt.event.MouseWheelListener]
+    :mouse-wheel-moved
+  :property-change [java.beans.PropertyChangeListener]
+    :property-change
+
+* За да проверим за какви събития може да слушаме даден обект използваме `(clojure.dev/show-events)`
