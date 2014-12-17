@@ -1,7 +1,5 @@
 (ns lectures.doc-table
-  (:require clojure.repl
-            [clojure.string :as str]
-            clojure.set) ; TODO: find why we need to requre all names we use and fix it
+  (:require [clojure.string :as str])
   (:use [clojure.walk :only (postwalk)]))
 
 (def ^:dynamic *doc-table*)
